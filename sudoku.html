@@ -1,0 +1,2121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Professional Sudoku Generator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <!-- Added JSZip library for creating zip files -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link id="google-fonts-link" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=Roboto+Mono:wght@400;700&family=Lora:wght@400;700&family=Playfair+Display:wght@400;700&family=Oswald:wght@400;700&family=Lato:wght@400;700&family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
+    
+    <style id="dynamic-styles"></style>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        /* Dynamic variables for styling */
+        :root {
+            --grid-bg-color: #ffffff;
+            --cell-bg-color: #ffffff;
+            --given-text-color: #111827;
+            --user-text-color: #4f46e5;
+            --error-text-color: #ef4444;
+            --main-border-color: #111827;
+            --box-border-color: #4b5563;
+            --cell-border-color: #d1d5db;
+            --main-border-width: 3px;
+            --box-border-width: 2px;
+            --cell-border-width: 1px;
+            --font-family: 'Roboto Mono', monospace;
+            --font-weight: 700;
+            --font-size: 1.75rem;
+        }
+
+        /* Styles for the Sudoku Grid */
+        .sudoku-grid-container {
+            page-break-inside: avoid;
+        }
+        .sudoku-grid {
+            display: grid;
+            border: var(--main-border-width) solid var(--main-border-color);
+            width: 100%;
+            max-width: 500px;
+            aspect-ratio: 1 / 1;
+            margin: auto;
+            background-color: var(--grid-bg-color);
+            position: relative;
+        }
+        .sudoku-cell {
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border: var(--cell-border-width) solid var(--cell-border-color);
+            font-family: var(--font-family);
+            font-weight: var(--font-weight);
+            font-size: var(--font-size);
+            background-color: var(--cell-bg-color);
+            cursor: pointer;
+            transition: background-color 0.1s;
+        }
+        .sudoku-cell.given {
+            color: var(--given-text-color);
+            cursor: not-allowed;
+        }
+        .sudoku-cell.user-filled {
+            color: var(--user-text-color);
+        }
+        .sudoku-cell.error {
+            color: var(--error-text-color) !important;
+            background-color: #fee2e2 !important; /* red-100 */
+        }
+        
+        /* Pencil Marks (Notes) */
+        .notes-grid {
+            display: grid;
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+        }
+        .note-cell {
+            font-weight: 400;
+            color: var(--user-text-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .sudoku-cell.selected {
+            background-color: #dbeafe !important;
+        }
+        .sudoku-cell.highlighted {
+            background-color: #eef2ff;
+        }
+
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-radius: 50%;
+            border-top: 4px solid #4f46e5;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .toggle-label {
+            transition: background-color 0.2s ease-in-out;
+        }
+        .toggle-label:after {
+            content: '';
+            display: block;
+            width: 1.25rem;
+            height: 1.25rem;
+            background-color: white;
+            border-radius: 9999px;
+            margin: 2px;
+            transition: transform 0.2s ease-in-out;
+            box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+        }
+        .toggle-checkbox:checked + .toggle-label {
+            background-color: #4f46e5;
+        }
+        .toggle-checkbox:checked + .toggle-label:after {
+            transform: translateX(100%);
+        }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-800">
+
+    <!-- Export Modal -->
+    <div id="export-modal" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white p-6 rounded-lg shadow-xl w-full max-w-3xl max-h-[90vh] flex flex-col">
+            <div class="flex justify-between items-center mb-4 flex-shrink-0">
+                <h3 class="text-xl font-bold">Export Options</h3>
+                <button id="export-close-btn" class="text-gray-500 hover:text-gray-800 text-2xl">&times;</button>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 overflow-hidden">
+                <div class="space-y-4 overflow-y-auto pr-4">
+                    <div class="space-y-2">
+                        <h4 class="font-semibold text-gray-800">Content</h4>
+                        <label class="flex items-center space-x-2">
+                            <input type="checkbox" id="export-include-puzzle" class="rounded text-indigo-600" checked>
+                            <span>Include Puzzle</span>
+                        </label>
+                        <label class="flex items-center space-x-2">
+                            <input type="checkbox" id="export-include-solution" class="rounded text-indigo-600" checked>
+                            <span>Include Solution</span>
+                        </label>
+                        <label class="flex items-center space-x-2">
+                            <input type="checkbox" id="export-include-titles" class="rounded text-indigo-600" checked>
+                            <span>Include Titles</span>
+                        </label>
+                    </div>
+
+                    <div id="export-pdf-options" class="space-y-2 border-t pt-4">
+                        <h4 class="font-semibold text-gray-800">PDF Options</h4>
+                        <div>
+                            <label for="pdf-layout" class="block text-sm font-medium text-gray-700">Layout</label>
+                            <select id="pdf-layout" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                                <option value="1">1 per page</option>
+                                <option value="2">2 per page</option>
+                                <option value="4" selected>4 per page</option>
+                                <option value="6">6 per page</option>
+                            </select>
+                        </div>
+                        <label class="flex items-center space-x-2">
+                            <input type="checkbox" id="solutions-on-separate-pages" class="rounded text-indigo-600" checked>
+                            <span>Place solutions on separate pages</span>
+                        </label>
+                    </div>
+
+                    <div class="space-y-2">
+                        <!-- KDP Options -->
+                        <div class="space-y-2 border-t pt-4 mt-4">
+                            <div class="flex items-center justify-between">
+                                <h4 class="font-semibold text-gray-800">KDP Formatting <a href="https://kdp.amazon.com/en_US/help/topic/GVBQ3CMEQW3W2VL6" target="_blank">ℹ︎</a></h4>
+                                <div class="relative inline-block w-10 align-middle select-none">
+                                    <input type="checkbox" id="kdp-enable-toggle" class="toggle-checkbox absolute opacity-0 w-0 h-0"/>
+                                    <label for="kdp-enable-toggle" class="toggle-label block overflow-hidden h-6 rounded-full bg-gray-300 cursor-pointer"></label>
+                                </div>
+                            </div>
+                            <div id="kdp-options-container" class="space-y-2 pl-4 hidden">
+                                <div>
+                                    <label for="kdp-trim-size" class="block text-sm font-medium text-gray-700">Trim Size</label>
+                                    <select id="kdp-trim-size" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                                        <option value="5x8">5" x 8"</option>
+                                        <option value="5.5x8.5">5.5" x 8.5"</option>
+                                        <option value="6x9" selected>6" x 9" (Most Common)</option>
+                                        <option value="6.14x9.21">6.14" x 9.21"</option>
+                                        <option value="7x10">7" x 10"</option>
+                                        <option value="8x10">8" x 10"</option>
+                                        <option value="8.5x11">8.5" x 11"</option>
+                                        <option value="8.25x8.25">8.25" x 8.25"</option>
+                                        <option value="8.5x8.5">8.5" x 8.5"</option>
+                                        <option value="custom">Custom...</option>
+                                    </select>
+                                </div>
+                                <div id="kdp-custom-trim-size-container" class="grid grid-cols-2 gap-2 hidden mt-2">
+                                    <div>
+                                        <label for="kdp-custom-width" class="block text-xs font-medium text-gray-600">Width (in)</label>
+                                        <input type="number" id="kdp-custom-width" value="6" step="0.01" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm text-sm">
+                                    </div>
+                                    <div>
+                                        <label for="kdp-custom-height" class="block text-xs font-medium text-gray-600">Height (in)</label>
+                                        <input type="number" id="kdp-custom-height" value="9" step="0.01" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm text-sm">
+                                    </div>
+                                </div>
+                                <label class="flex items-center space-x-2">
+                                    <input type="checkbox" id="kdp-bleed" class="rounded text-indigo-600">
+                                    <span>Page has Bleed</span>
+                                </label>
+                                <label class="flex items-center space-x-2 mt-2">
+                                    <input type="checkbox" id="kdp-custom-margins-toggle" class="rounded text-indigo-600">
+                                    <span>Use Custom Margins</span>
+                                </label>
+                                <div id="kdp-auto-margin-note">
+                                    <p class="text-xs text-gray-500">Margins will be calculated automatically based on KDP guidelines and total page count.</p>
+                                </div>
+                                <div id="kdp-custom-margins-container" class="grid grid-cols-2 gap-2 hidden mt-2">
+                                    <div>
+                                        <label for="kdp-margin-top" class="block text-xs font-medium text-gray-600">Top (in)</label>
+                                        <input type="number" id="kdp-margin-top" value="0.375" step="0.01" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm text-sm">
+                                    </div>
+                                    <div>
+                                        <label for="kdp-margin-bottom" class="block text-xs font-medium text-gray-600">Bottom (in)</label>
+                                        <input type="number" id="kdp-margin-bottom" value="0.375" step="0.01" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm text-sm">
+                                    </div>
+                                    <div>
+                                        <label for="kdp-margin-inside" class="block text-xs font-medium text-gray-600">Inside (in)</label>
+                                        <input type="number" id="kdp-margin-inside" value="0.375" step="0.01" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm text-sm">
+                                    </div>
+                                    <div>
+                                        <label for="kdp-margin-outside" class="block text-xs font-medium text-gray-600">Outside (in)</label>
+                                        <input type="number" id="kdp-margin-outside" value="0.375" step="0.01" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm text-sm">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <label for="pdf-header" class="block text-sm font-medium text-gray-700">Header Text (Optional)</label>
+                            <input type="text" id="pdf-header" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" placeholder="e.g., My Sudoku Book">
+                        </div>
+                        <div>
+                            <label for="pdf-footer" class="block text-sm font-medium text-gray-700">Footer Text (Optional)</label>
+                            <input type="text" id="pdf-footer" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" placeholder="e.g., Page %p / %t">
+                        </div>
+                         <p class="text-xs text-gray-500">Note: Use %p for page number and %t for total pages in footer.</p>
+                    </div>
+                    <div id="export-image-options" class="space-y-2 border-t pt-4">
+                        <h4 class="font-semibold text-gray-800">Image/SVG Options</h4>
+                        <label class="flex items-center space-x-2">
+                            <input type="checkbox" id="export-all-puzzles" class="rounded text-indigo-600">
+                            <span>Export all generated puzzles (.zip)</span>
+                        </label>
+                        <label class="flex items-center space-x-2">
+                            <input type="checkbox" id="export-transparent-bg" class="rounded text-indigo-600">
+                            <span>Transparent Background (PNG only)</span>
+                        </label>
+                         <p class="text-xs text-gray-500">Note: Exporting a single puzzle will use the current view.</p>
+                    </div>
+                </div>
+                <div class="bg-gray-100 p-2 rounded-lg flex items-center justify-center">
+                    <canvas id="export-preview-canvas" class="max-w-full max-h-full"></canvas>
+                </div>
+            </div>
+            <div class="mt-6 flex justify-end gap-4 flex-shrink-0">
+                <button id="export-cancel-btn" class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300">Cancel</button>
+                <button id="export-proceed-btn" class="px-6 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700 flex items-center gap-2">
+                    <span id="export-proceed-text">Export</span>
+                    <div id="export-loader" class="loader hidden"></div>
+                </button>
+            </div>
+        </div>
+    </div>
+
+
+    <div class="container mx-auto p-4 md:p-8">
+        <h1 class="text-4xl font-bold text-center text-gray-900 mb-2">Sudoku Puzzle Generator</h1>
+        <p class="text-center text-gray-600 mb-8">Create, customize, and export professional Sudoku puzzles for books and print.</p>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Controls Column -->
+            <div class="lg:col-span-1 bg-white rounded-xl shadow-lg overflow-hidden self-start">
+                <div class="p-6 space-y-6">
+                    <!-- Generation Options -->
+                    <div class="space-y-4">
+                        <h2 class="text-xl font-bold text-gray-800 border-b pb-2">1. Generation Options</h2>
+                        <div>
+                            <label for="grid-size-select" class="block text-sm font-medium text-gray-700">Grid Size</label>
+                            <select id="grid-size-select" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                                <option value="4">4x4</option>
+                                <option value="6">6x6</option>
+                                <option value="9" selected>9x9</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="difficulty-select" class="block text-sm font-medium text-gray-700">Difficulty Level</label>
+                            <select id="difficulty-select" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"></select>
+                        </div>
+                         <div>
+                            <label for="puzzle-count" class="block text-sm font-medium text-gray-700">Number of Puzzles</label>
+                            <input type="number" id="puzzle-count" value="1" min="1" max="100" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                        </div>
+                    </div>
+
+                    <!-- Styling & Layout -->
+                    <div class="space-y-4 border-t pt-4">
+                         <h2 class="text-xl font-bold text-gray-800 border-b pb-2">2. Styling & Layout</h2>
+                        
+                        <!-- Title Font Selection -->
+                         <div class="space-y-2 border-t pt-4">
+                             <h3 class="text-md font-semibold text-gray-700">Titles Font</h3>
+                             <div>
+                                 <label for="font-method-select-title" class="block text-sm font-medium text-gray-700">Font Family</label>
+                                 <select id="font-method-select-title" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                                     <optgroup label="Pre-loaded Fonts">
+                                         <option value="Inter:400,700" selected>Inter</option>
+                                         <option value="Roboto Mono:400,700">Roboto Mono</option>
+                                         <option value="Lora:400,700">Lora</option>
+                                         <option value="Playfair Display:400,700">Playfair Display</option>
+                                         <option value="Oswald:400,700">Oswald</option>
+                                         <option value="Lato:400,700">Lato</option>
+                                         <option value="Montserrat:400,700">Montserrat</option>
+                                     </optgroup>
+                                     <optgroup label="Custom Fonts">
+                                         <option value="google">Add Google Font</option>
+                                         <option value="url">Add Font from URL</option>
+                                         <option value="upload">Upload Font</option>
+                                     </optgroup>
+                                 </select>
+                            </div>
+                             <div id="google-font-container-title" class="space-y-2 hidden">
+                                 <label for="google-font-input-title" class="block text-sm font-medium text-gray-700">Google Font Link</label>
+                                 <div class="flex gap-2">
+                                     <input type="text" id="google-font-input-title" class="block w-full rounded-md border-gray-300 shadow-sm sm:text-sm" placeholder='Paste <link> tag here'>
+                                     <button id="add-google-font-btn-title" class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700">Apply</button>
+                                 </div>
+                             </div>
+                             <div id="url-font-container-title" class="space-y-2 hidden">
+                                 <div>
+                                     <label for="url-font-css-input-title" class="block text-sm font-medium text-gray-700">CSS URL</label>
+                                     <input type="url" id="url-font-css-input-title" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm" placeholder='https://.../font.css'>
+                                 </div>
+                                 <div>
+                                     <label for="url-font-family-input-title" class="block text-sm font-medium text-gray-700">Font Family Name</label>
+                                     <div class="flex gap-2 mt-1">
+                                         <input type="text" id="url-font-family-input-title" class="block w-full rounded-md border-gray-300 shadow-sm sm:text-sm" placeholder='"Comic Sans MS"'>
+                                         <button id="add-url-font-btn-title" class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700">Apply</button>
+                                     </div>
+                                 </div>
+                             </div>
+                             <div id="upload-font-container-title" class="space-y-2 hidden">
+                                 <label for="custom-font-uploader-title" class="block text-sm font-medium text-gray-700">Upload Font File</label>
+                                 <input type="file" id="custom-font-uploader-title" accept=".ttf,.otf,.woff,.woff2" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-600 hover:file:bg-indigo-100">
+                             </div>
+                                <div>
+                                    <label for="font-weight-select-title" class="block text-sm font-medium text-gray-700">Weight</label>
+                                    <select id="font-weight-select-title" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"></select>
+                                </div>
+                                <div>
+                                    <label for="font-size-slider-title" class="block text-sm font-medium text-gray-700">Font Size: <span id="font-size-value-title">40</span></label>
+                                    <input type="range" id="font-size-slider-title" min="20" max="80" value="40" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                                </div>
+                                 <div>
+                                     <label for="title-color-input" class="block text-sm font-medium text-gray-700">Color</label>
+                                     <input type="color" id="title-color-input" value="#111827" class="mt-1 h-10 w-full rounded-md border-gray-300">
+                                 </div>
+                                 <div id="custom-title-options" class="space-y-2">
+                                <div>
+                                    <label for="puzzle-title-format" class="block text-sm font-medium text-gray-600">Puzzle Title Format</label>
+                                    <input type="text" id="puzzle-title-format" value="Puzzle #" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm text-sm">
+                                </div>
+                                <div>
+                                    <label for="solution-title-format" class="block text-sm font-medium text-gray-600">Solution Title Format</label>
+                                    <input type="text" id="solution-title-format" value="Solution #" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm text-sm">
+                                </div>
+                                <p class="text-xs text-gray-500">Use # as a placeholder for the puzzle number.</p>
+                            </div>
+                         </div>
+
+                        <!-- Grid Numbers Font Selection -->
+                         <div class="space-y-2">
+                             <h3 class="text-md font-semibold text-gray-700">Grid Numbers Font</h3>
+                             <div>
+                                 <label for="font-method-select" class="block text-sm font-medium text-gray-700">Font Family</label>
+                                 <select id="font-method-select" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                                     <optgroup label="Pre-loaded Fonts">
+                                         <option value="Roboto Mono:400,700" selected>Roboto Mono</option>
+                                         <option value="Lora:400,700">Lora</option>
+                                         <option value="Playfair Display:400,700">Playfair Display</option>
+                                         <option value="Oswald:400,700">Oswald</option>
+                                         <option value="Lato:400,700">Lato</option>
+                                         <option value="Montserrat:400,700">Montserrat</option>
+                                     </optgroup>
+                                     <optgroup label="Custom Fonts">
+                                         <option value="google">Add Google Font</option>
+                                         <option value="url">Add Font from URL</option>
+                                         <option value="upload">Upload Font</option>
+                                     </optgroup>
+                                 </select>
+                             </div>
+                             <div id="google-font-container" class="space-y-2 hidden">
+                                 <label for="google-font-input" class="block text-sm font-medium text-gray-700">Google Font Link</label>
+                                 <div class="flex gap-2">
+                                     <input type="text" id="google-font-input" class="block w-full rounded-md border-gray-300 shadow-sm sm:text-sm" placeholder='Paste <link> tag here'>
+                                     <button id="add-google-font-btn" class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700">Apply</button>
+                                 </div>
+                             </div>
+                             <div id="url-font-container" class="space-y-2 hidden">
+                                 <div>
+                                     <label for="url-font-css-input" class="block text-sm font-medium text-gray-700">CSS URL</label>
+                                     <input type="url" id="url-font-css-input" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm" placeholder='https://.../font.css'>
+                                 </div>
+                                 <div>
+                                     <label for="url-font-family-input" class="block text-sm font-medium text-gray-700">Font Family Name</label>
+                                     <div class="flex gap-2 mt-1">
+                                         <input type="text" id="url-font-family-input" class="block w-full rounded-md border-gray-300 shadow-sm sm:text-sm" placeholder='"Comic Sans MS"'>
+                                         <button id="add-url-font-btn" class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700">Apply</button>
+                                     </div>
+                                 </div>
+                             </div>
+                             <div id="upload-font-container" class="space-y-2 hidden">
+                                 <label for="custom-font-uploader" class="block text-sm font-medium text-gray-700">Upload Font File</label>
+                                 <input type="file" id="custom-font-uploader" accept=".ttf,.otf,.woff,.woff2" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-600 hover:file:bg-indigo-100">
+                             </div>
+                                <div>
+                                    <label for="font-weight-select" class="block text-sm font-medium text-gray-700">Weight</label>
+                                    <select id="font-weight-select" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"></select>
+                                </div>
+                                <div>
+                                    <label for="font-size-slider" class="block text-sm font-medium text-gray-700">Font Size: <span id="font-size-value">30</span></label>
+                                    <input type="range" id="font-size-slider" min="15" max="35" value="30" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                                </div>
+                         </div>
+                        
+                        <!-- Colors -->
+                        <div class="grid grid-cols-2 gap-4 border-t pt-4">
+                                <div>
+                                    <label for="given-color" class="block text-sm font-medium text-gray-700">Given Numbers</label>
+                                    <input type="color" id="given-color" value="#111827" class="mt-1 h-10 w-full rounded-md border-gray-300">
+                                </div>
+                                <div>
+                                    <label for="user-color" class="block text-sm font-medium text-gray-700">User Numbers</label>
+                                    <input type="color" id="user-color" value="#4f46e5" class="mt-1 h-10 w-full rounded-md border-gray-300">
+                                </div>
+                                <div>
+                                    <label for="solution-color" class="block text-sm font-medium text-gray-700">Solution Numbers</label>
+                                    <input type="color" id="solution-color" value="#16a34a" class="mt-1 h-10 w-full rounded-md border-gray-300">
+                                </div>
+                                <div>
+                                    <label for="main-border-color" class="block text-sm font-medium text-gray-700">Outer Border</label>
+                                    <input type="color" id="main-border-color" value="#111827" class="mt-1 h-10 w-full rounded-md border-gray-300">
+                                </div>
+                                <div>
+                                    <label for="box-border-color" class="block text-sm font-medium text-gray-700">Box Border</label>
+                                    <input type="color" id="box-border-color" value="#4b5563" class="mt-1 h-10 w-full rounded-md border-gray-300">
+                                </div>
+                                <div>
+                                    <label for="cell-border-color" class="block text-sm font-medium text-gray-700">Cell Border</label>
+                                    <input type="color" id="cell-border-color" value="#d1d5db" class="mt-1 h-10 w-full rounded-md border-gray-300">
+                                </div>
+                        </div>
+                        <!-- Border Widths -->
+                        <div class="space-y-2 border-t pt-4">
+                            <h3 class="text-md font-semibold text-gray-700">Border Widths</h3>
+                            <div>
+                                <label for="main-border-slider" class="block text-sm font-medium text-gray-700">Outer Border: <span id="main-border-value">3</span>px</label>
+                                <input type="range" id="main-border-slider" min="0" max="10" value="3" step="0.5" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                            </div>
+                            <div>
+                                <label for="box-border-slider" class="block text-sm font-medium text-gray-700">Box Border: <span id="box-border-value">2</span>px</label>
+                                <input type="range" id="box-border-slider" min="0" max="10" value="2" step="0.5" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                            </div>
+                            <div>
+                                <label for="cell-border-slider" class="block text-sm font-medium text-gray-700">Cell Border: <span id="cell-border-value">1</span>px</label>
+                                <input type="range" id="cell-border-slider" min="0" max="10" value="1" step="0.5" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="p-6 bg-gray-50">
+                    <button id="generate-btn" class="w-full bg-indigo-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-200 shadow-md flex items-center justify-center gap-2">
+                        <svg id="generate-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5"><path d="M12 2.69l.34 2.27.34 2.27a1.5 1.5 0 0 0 1.5 1.5h2.27l2.27.34 2.27.34a1.5 1.5 0 0 1 1.5 1.5v2.27l.34 2.27.34 2.27a1.5 1.5 0 0 1-1.5 1.5h-2.27l-2.27.34-2.27.34a1.5 1.5 0 0 0-1.5 1.5v2.27l-.34 2.27-.34 2.27a1.5 1.5 0 0 1-1.5-1.5v-2.27l-.34-2.27-.34-2.27a1.5 1.5 0 0 0-1.5-1.5h-2.27l-2.27-.34-2.27-.34a1.5 1.5 0 0 1-1.5-1.5v-2.27l-.34-2.27-.34-2.27a1.5 1.5 0 0 1 1.5-1.5h2.27l2.27-.34 2.27-.34a1.5 1.5 0 0 0 1.5-1.5z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                        <div id="generate-loader" class="loader hidden"></div>
+                        <span id="generate-text">Generate Puzzles</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Output Column -->
+            <div id="output-section" class="lg:col-span-2 bg-white p-6 rounded-xl shadow-lg">
+                <div id="message-box" class="text-center h-6 mb-2 font-semibold"></div>
+                <div id="action-buttons" class="mb-4 flex flex-wrap justify-center gap-4 hidden">
+                     <button id="show-solution-btn" class="bg-teal-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-teal-700 transition-colors duration-200">Show Solution</button>
+                     <button data-export-format="pdf" class="export-btn bg-red-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-red-700 transition-colors duration-200">Export as PDF</button>
+                     <button data-export-format="png" class="export-btn bg-blue-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors duration-200">Export as PNG</button>
+                     <button data-export-format="svg" class="export-btn bg-green-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-green-700 transition-colors duration-200">Export as SVG</button>
+                </div>
+
+                <div id="puzzle-container" class="space-y-12">
+                    <div id="placeholder" class="text-center text-gray-500 py-20">
+                        <p class="text-lg">Your generated Sudoku puzzles will appear here.</p>
+                        <p class="text-sm">Select your options and click "Generate Puzzles".</p>
+                    </div>
+                </div>
+
+                <div id="interactive-controls" class="mt-4 pt-4 border-t hidden">
+                     <div class="flex justify-between items-center mb-4">
+                         <div class="flex items-center space-x-2">
+                             <button id="mode-number-btn" class="px-3 py-1 text-sm font-bold bg-indigo-600 text-white rounded-md">Number</button>
+                             <button id="mode-notes-btn" class="px-3 py-1 text-sm font-bold bg-gray-200 text-gray-700 rounded-md">Notes</button>
+                         </div>
+                         <div class="flex items-center">
+                             <label for="auto-check-toggle" class="text-sm font-medium text-gray-700 mr-2">Auto-Check for Errors</label>
+                             <div class="relative inline-block w-10 mr-2 align-middle select-none">
+                                 <input type="checkbox" id="auto-check-toggle" class="toggle-checkbox absolute opacity-0 w-0 h-0"/>
+                                 <label for="auto-check-toggle" class="toggle-label block overflow-hidden h-6 rounded-full bg-gray-300 cursor-pointer"></label>
+                             </div>
+                         </div>
+                    </div>
+                    <div id="number-pad" class="grid grid-cols-5 gap-2"></div>
+                </div>
+
+                 <div id="pagination-controls" class="mt-6 flex justify-center items-center gap-4 hidden"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- DOM Elements ---
+            const generateBtn = document.getElementById('generate-btn');
+            const generateText = document.getElementById('generate-text');
+            const generateIcon = document.getElementById('generate-icon');
+            const generateLoader = document.getElementById('generate-loader');
+            const puzzleContainer = document.getElementById('puzzle-container');
+            const placeholder = document.getElementById('placeholder');
+            const actionButtons = document.getElementById('action-buttons');
+            const paginationControls = document.getElementById('pagination-controls');
+            const gridSizeSelect = document.getElementById('grid-size-select');
+            const difficultySelect = document.getElementById('difficulty-select');
+            const puzzleCountInput = document.getElementById('puzzle-count');
+            const showSolutionBtn = document.getElementById('show-solution-btn');
+            const interactiveControls = document.getElementById('interactive-controls');
+            const numberPad = document.getElementById('number-pad');
+            const modeNumberBtn = document.getElementById('mode-number-btn');
+            const modeNotesBtn = document.getElementById('mode-notes-btn');
+            const autoCheckToggle = document.getElementById('auto-check-toggle');
+            const messageBox = document.getElementById('message-box');
+            
+            // --- Font & Styling Elements ---
+            const fontMethodSelect = document.getElementById('font-method-select');
+            const googleFontContainer = document.getElementById('google-font-container');
+            const urlFontContainer = document.getElementById('url-font-container');
+            const uploadFontContainer = document.getElementById('upload-font-container');
+            const googleFontInput = document.getElementById('google-font-input');
+            const addGoogleFontBtn = document.getElementById('add-google-font-btn');
+            const urlFontCssInput = document.getElementById('url-font-css-input');
+            const urlFontFamilyInput = document.getElementById('url-font-family-input');
+            const addUrlFontBtn = document.getElementById('add-url-font-btn');
+            const customFontUploader = document.getElementById('custom-font-uploader');
+            const fontWeightSelect = document.getElementById('font-weight-select');
+            const fontSizeSlider = document.getElementById('font-size-slider');
+            const fontSizeValue = document.getElementById('font-size-value');
+
+            // --- Title Font & Styling Elements ---
+            const fontMethodSelectTitle = document.getElementById('font-method-select-title');
+            const googleFontContainerTitle = document.getElementById('google-font-container-title');
+            const urlFontContainerTitle = document.getElementById('url-font-container-title');
+            const uploadFontContainerTitle = document.getElementById('upload-font-container-title');
+            const googleFontInputTitle = document.getElementById('google-font-input-title');
+            const addGoogleFontBtnTitle = document.getElementById('add-google-font-btn-title');
+            const urlFontCssInputTitle = document.getElementById('url-font-css-input-title');
+            const urlFontFamilyInputTitle = document.getElementById('url-font-family-input-title');
+            const addUrlFontBtnTitle = document.getElementById('add-url-font-btn-title');
+            const customFontUploaderTitle = document.getElementById('custom-font-uploader-title');
+            const fontWeightSelectTitle = document.getElementById('font-weight-select-title');
+            const fontSizeSliderTitle = document.getElementById('font-size-slider-title');
+            const fontSizeValueTitle = document.getElementById('font-size-value-title');
+            const titleColorInput = document.getElementById('title-color-input');
+
+
+            const givenColorInput = document.getElementById('given-color');
+            const userColorInput = document.getElementById('user-color');
+            const solutionColorInput = document.getElementById('solution-color');
+            const mainBorderColorInput = document.getElementById('main-border-color');
+            const boxBorderColorInput = document.getElementById('box-border-color');
+            const cellBorderColorInput = document.getElementById('cell-border-color');
+            const mainBorderSlider = document.getElementById('main-border-slider');
+            const mainBorderValue = document.getElementById('main-border-value');
+            const boxBorderSlider = document.getElementById('box-border-slider');
+            const boxBorderValue = document.getElementById('box-border-value');
+            const cellBorderSlider = document.getElementById('cell-border-slider');
+            const cellBorderValue = document.getElementById('cell-border-value');
+
+            // --- Export Modal Elements ---
+            const exportModal = document.getElementById('export-modal');
+            const exportCloseBtn = document.getElementById('export-close-btn');
+            const exportCancelBtn = document.getElementById('export-cancel-btn');
+            const exportProceedBtn = document.getElementById('export-proceed-btn');
+            const exportProceedText = document.getElementById('export-proceed-text');
+            const exportLoader = document.getElementById('export-loader');
+            const exportPdfOptions = document.getElementById('export-pdf-options');
+            const exportImageOptions = document.getElementById('export-image-options');
+            const exportPreviewCanvas = document.getElementById('export-preview-canvas');
+            const exportIncludePuzzle = document.getElementById('export-include-puzzle');
+            const exportIncludeSolution = document.getElementById('export-include-solution');
+            const exportIncludeTitles = document.getElementById('export-include-titles');
+            const customTitleOptions = document.getElementById('custom-title-options');
+            const puzzleTitleFormatInput = document.getElementById('puzzle-title-format');
+            const solutionTitleFormatInput = document.getElementById('solution-title-format');
+            const solutionsOnSeparatePages = document.getElementById('solutions-on-separate-pages');
+            const exportAllPuzzles = document.getElementById('export-all-puzzles'); // New element
+            const exportTransparentBg = document.getElementById('export-transparent-bg');
+            const pdfLayoutSelect = document.getElementById('pdf-layout');
+            const pdfHeaderInput = document.getElementById('pdf-header');
+            const pdfFooterInput = document.getElementById('pdf-footer');
+            
+            // --- KDP Elements ---
+            const kdpEnableToggle = document.getElementById('kdp-enable-toggle');
+            const kdpOptionsContainer = document.getElementById('kdp-options-container');
+            const kdpTrimSizeSelect = document.getElementById('kdp-trim-size');
+            const kdpBleedCheckbox = document.getElementById('kdp-bleed');
+            const kdpCustomTrimSizeContainer = document.getElementById('kdp-custom-trim-size-container');
+            const kdpCustomWidthInput = document.getElementById('kdp-custom-width');
+            const kdpCustomHeightInput = document.getElementById('kdp-custom-height');
+            const kdpCustomMarginsToggle = document.getElementById('kdp-custom-margins-toggle');
+            const kdpAutoMarginNote = document.getElementById('kdp-auto-margin-note');
+            const kdpCustomMarginsContainer = document.getElementById('kdp-custom-margins-container');
+            const kdpMarginTopInput = document.getElementById('kdp-margin-top');
+            const kdpMarginBottomInput = document.getElementById('kdp-margin-bottom');
+            const kdpMarginInsideInput = document.getElementById('kdp-margin-inside');
+            const kdpMarginOutsideInput = document.getElementById('kdp-margin-outside');
+
+            // --- State Management ---
+            let generatedPuzzles = [];
+            let currentPuzzleIndex = 0;
+            let userBoards = [];
+            let selectedCell = null;
+            let isNotesMode = false;
+            let currentExportFormat = '';
+            let currentGridSize = 9;
+            // Grid Font State
+            let activeFont = 'Roboto Mono';
+            let activeFontWeight = '700';
+            let activeFontUrl = 'https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&display=swap';
+            let activeFontDataUrl = null;
+            // Title Font State
+            let activeTitleFont = 'Inter';
+            let activeTitleFontWeight = '700';
+            let activeTitleFontUrl = 'https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap';
+            let activeTitleFontDataUrl = null;
+            
+            const preloadedFonts = {
+                'Roboto Mono': { url: 'https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&display=swap' },
+                'Lora': { url: 'https://fonts.googleapis.com/css2?family=Lora:wght@400;700&display=swap' },
+                'Playfair Display': { url: 'https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&display=swap' },
+                'Inter': { url: 'https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap' },
+                'Oswald': { url: 'https://fonts.googleapis.com/css2?family=Oswald:wght@400;700&display=swap' },
+                'Lato': { url: 'https://fonts.googleapis.com/css2?family=Lato:wght@400;700&display=swap' },
+                'Montserrat': { url: 'https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap' }
+            };
+
+            // --- Sudoku Engine (Dynamic Grid Size) ---
+            class SudokuGenerator {
+                constructor(size = 9) {
+                    this.size = size;
+                    this.boxRows = size === 6 ? 2 : Math.sqrt(size);
+                    this.boxCols = size === 6 ? 3 : Math.sqrt(size);
+                    this.board = this.createEmptyBoard();
+                    this.solutionCount = 0;
+                }
+
+                createEmptyBoard() {
+                    return Array(this.size).fill(0).map(() => Array(this.size).fill(0));
+                }
+
+                generate(difficulty) {
+                    this.board = this.createEmptyBoard();
+                    this.fillBoard(this.board);
+                    const solution = JSON.parse(JSON.stringify(this.board));
+                    const puzzle = this.createPuzzle(solution, difficulty);
+                    if (puzzle) {
+                        return { puzzle, solution };
+                    } else {
+                        return this.generate(difficulty);
+                    }
+                }
+
+                fillBoard(board) {
+                    const find = this.findEmpty(board);
+                    if (!find) return true;
+                    const [row, col] = find;
+                    const numbers = this.shuffle([...Array(this.size).keys()].map(i => i + 1));
+                    for (let num of numbers) {
+                        if (this.isValid(board, num, [row, col])) {
+                            board[row][col] = num;
+                            if (this.fillBoard(board)) return true;
+                            board[row][col] = 0;
+                        }
+                    }
+                    return false;
+                }
+
+                createPuzzle(board, difficulty) {
+                    const totalCells = this.size * this.size;
+                    const difficultyMap = {
+                        4: { easy: [10, 12], medium: [8, 9], hard: [6, 7] },
+                        6: { easy: [22, 26], medium: [18, 21], hard: [14, 17] },
+                        9: { kids: [50, 60], beginner: [40, 49], easy: [36, 39], medium: [32, 35], hard: [28, 31], expert: [22, 27], evil: [17, 21] }
+                    };
+                    const [minClues, maxClues] = difficultyMap[this.size][difficulty];
+                    const targetClues = Math.floor(Math.random() * (maxClues - minClues + 1)) + minClues;
+                    
+                    let puzzle = JSON.parse(JSON.stringify(board));
+                    let positions = this.getBoardPositions();
+                    this.shuffle(positions);
+                    
+                    let removedCount = 0;
+                    while (totalCells - removedCount > targetClues && positions.length > 0) {
+                        const [r, c] = positions.pop();
+                        const temp = puzzle[r][c];
+                        puzzle[r][c] = 0;
+                        
+                        this.solutionCount = 0;
+                        this.solve(JSON.parse(JSON.stringify(puzzle)));
+                        
+                        if (this.solutionCount !== 1) {
+                            puzzle[r][c] = temp;
+                        } else {
+                            removedCount++;
+                        }
+                    }
+                    return puzzle;
+                }
+
+                solve(board) {
+                    const find = this.findEmpty(board);
+                    if (!find) {
+                        this.solutionCount++;
+                        return;
+                    }
+                    const [row, col] = find;
+                    for (let num = 1; num <= this.size && this.solutionCount < 2; num++) {
+                        if (this.isValid(board, num, [row, col])) {
+                            board[row][col] = num;
+                            this.solve(board);
+                            board[row][col] = 0;
+                        }
+                    }
+                }
+
+                findEmpty(board) {
+                    for (let r = 0; r < this.size; r++) for (let c = 0; c < this.size; c++) if (board[r][c] === 0) return [r, c];
+                    return null;
+                }
+
+                isValid(board, num, pos) {
+                    const [row, col] = pos;
+                    for (let i = 0; i < this.size; i++) {
+                        if (board[row][i] === num && col !== i) return false;
+                        if (board[i][col] === num && row !== i) return false;
+                    }
+                    const boxX = Math.floor(col / this.boxCols) * this.boxCols;
+                    const boxY = Math.floor(row / this.boxRows) * this.boxRows;
+                    for (let r = boxY; r < boxY + this.boxRows; r++) {
+                        for (let c = boxX; c < boxX + this.boxCols; c++) {
+                            if (board[r][c] === num && (r !== row || c !== col)) return false;
+                        }
+                    }
+                    return true;
+                }
+
+                shuffle(array) {
+                    for (let i = array.length - 1; i > 0; i--) {
+                        const j = Math.floor(Math.random() * (i + 1));
+                        [array[i], array[j]] = [array[j], array[i]];
+                    }
+                    return array;
+                }
+                
+                getBoardPositions() {
+                    const positions = [];
+                    for(let r=0; r < this.size; r++) for(let c=0; c < this.size; c++) positions.push([r, c]);
+                    return positions;
+                }
+            }
+
+            // --- UI Logic ---
+
+            function updateDifficultyOptions() {
+                const size = parseInt(gridSizeSelect.value, 10);
+                difficultySelect.innerHTML = '';
+                let options;
+                if (size === 9) {
+                    options = {
+                        kids: 'Kids (50-60 clues)', beginner: 'Beginner (40-49 clues)', easy: 'Easy (36-39 clues)',
+                        medium: 'Medium (32-35 clues)', hard: 'Hard (28-31 clues)', expert: 'Expert (22-27 clues)', evil: 'Evil (17-21 clues)'
+                    };
+                    difficultySelect.value = 'medium';
+                } else if (size === 6) {
+                    options = { easy: 'Easy (22-26 clues)', medium: 'Medium (18-21 clues)', hard: 'Hard (14-17 clues)' };
+                    difficultySelect.value = 'medium';
+                } else { // 4x4
+                    options = { easy: 'Easy (10-12 clues)', medium: 'Medium (8-9 clues)', hard: 'Hard (6-7 clues)' };
+                    difficultySelect.value = 'medium';
+                }
+                for (const [value, text] of Object.entries(options)) {
+                    const option = document.createElement('option');
+                    option.value = value;
+                    option.textContent = text;
+                    difficultySelect.appendChild(option);
+                }
+            }
+
+            function renderGrid(puzzleData, index) {
+                const { puzzle } = puzzleData;
+                const size = puzzle.length;
+                const boxRows = size === 6 ? 2 : Math.sqrt(size);
+                const boxCols = size === 6 ? 3 : Math.sqrt(size);
+                const userBoard = userBoards[index];
+                const container = document.createElement('div');
+                container.className = 'sudoku-grid-container';
+                container.dataset.puzzleId = index;
+
+                const puzzleTitle = document.createElement('h3');
+                puzzleTitle.className = 'puzzle-title-preview text-center mb-2'; // Use a dedicated class for dynamic styling
+                const puzzleTitleFormat = puzzleTitleFormatInput.value;
+                puzzleTitle.textContent = puzzleTitleFormat.replace('#', index + 1);
+                container.appendChild(puzzleTitle);
+
+                const gridEl = document.createElement('div');
+                gridEl.className = 'sudoku-grid';
+                gridEl.style.gridTemplateColumns = `repeat(${size}, 1fr)`;
+                gridEl.style.gridTemplateRows = `repeat(${size}, 1fr)`;
+                
+                // Create all cells first
+                const cells = [];
+                for (let r = 0; r < size; r++) {
+                    for (let c = 0; c < size; c++) {
+                        const cellEl = document.createElement('div');
+                        cellEl.className = 'sudoku-cell';
+                        cellEl.dataset.row = r;
+                        cellEl.dataset.col = c;
+                        const givenVal = puzzle[r][c];
+                        const userCell = userBoard.cells[r][c];
+
+                        if (givenVal !== 0) {
+                            cellEl.textContent = givenVal;
+                            cellEl.classList.add('given');
+                        } else {
+                            if (userCell.value !== 0) {
+                                cellEl.textContent = userCell.value;
+                                cellEl.classList.add('user-filled');
+                            } else if (userCell.notes.size > 0) {
+                                cellEl.appendChild(createNotesGrid(userCell.notes, size));
+                            }
+                            cellEl.classList.add('empty');
+                        }
+                        cells.push(cellEl);
+                    }
+                }
+
+                // Append all cells to the grid
+                cells.forEach(cell => gridEl.appendChild(cell));
+                
+                // Create a separate container for box borders to ensure they are on top
+                const borderOverlay = document.createElement('div');
+                borderOverlay.style.position = 'absolute';
+                borderOverlay.style.top = '0';
+                borderOverlay.style.left = '0';
+                borderOverlay.style.width = '100%';
+                borderOverlay.style.height = '100%';
+                borderOverlay.style.pointerEvents = 'none'; // Make it non-interactive
+                borderOverlay.style.display = 'grid';
+                borderOverlay.style.gridTemplateColumns = `repeat(${size}, 1fr)`;
+                borderOverlay.style.gridTemplateRows = `repeat(${size}, 1fr)`;
+
+                for (let r = 0; r < size; r++) {
+                    for (let c = 0; c < size; c++) {
+                        const borderCell = document.createElement('div');
+                        if ((c + 1) % boxCols === 0 && c + 1 !== size) {
+                            borderCell.style.borderRight = `var(--box-border-width) solid var(--box-border-color)`;
+                        }
+                        if ((r + 1) % boxRows === 0 && r + 1 !== size) {
+                            borderCell.style.borderBottom = `var(--box-border-width) solid var(--box-border-color)`;
+                        }
+                        borderOverlay.appendChild(borderCell);
+                    }
+                }
+
+                gridEl.appendChild(borderOverlay);
+                container.appendChild(gridEl);
+                return container;
+            }
+            
+            function createNotesGrid(notes, size) {
+                const notesGrid = document.createElement('div');
+                notesGrid.className = 'notes-grid';
+                const noteBoxSize = size === 6 ? 3 : Math.sqrt(size);
+                notesGrid.style.gridTemplateColumns = `repeat(${noteBoxSize}, 1fr)`;
+                notesGrid.style.fontSize = `clamp(0.4rem, ${6 / size}vmin, 0.8rem)`;
+
+                for (let i = 1; i <= size; i++) {
+                    const noteCell = document.createElement('div');
+                    noteCell.className = 'note-cell';
+                    noteCell.textContent = notes.has(i) ? i : '';
+                    notesGrid.appendChild(noteCell);
+                }
+                return notesGrid;
+            }
+
+            async function handleGeneration() {
+                toggleLoading(true);
+                puzzleContainer.innerHTML = '';
+                placeholder.classList.add('hidden');
+                generatedPuzzles = [];
+                userBoards = [];
+                
+                currentGridSize = parseInt(gridSizeSelect.value, 10);
+                const count = parseInt(puzzleCountInput.value, 10);
+                const difficulty = difficultySelect.value;
+                const generator = new SudokuGenerator(currentGridSize);
+
+                await new Promise(resolve => setTimeout(resolve, 50));
+
+                for (let i = 0; i < count; i++) {
+                    const puzzleData = generator.generate(difficulty);
+                    generatedPuzzles.push({ ...puzzleData, id: i });
+                    userBoards.push({
+                        cells: Array(currentGridSize).fill(0).map(() => Array(currentGridSize).fill(0).map(() => ({ value: 0, notes: new Set() })))
+                    });
+                }
+                
+                displayPuzzles();
+                setupPagination();
+                createNumberPad();
+                actionButtons.classList.remove('hidden');
+                interactiveControls.classList.remove('hidden');
+                toggleLoading(false);
+            }
+
+            function displayPuzzles(page = 1) {
+                 puzzleContainer.innerHTML = '';
+                 currentPuzzleIndex = page - 1;
+                 const puzzleData = generatedPuzzles[currentPuzzleIndex];
+                 if(puzzleData) {
+                     const gridElement = renderGrid(puzzleData, puzzleData.id);
+                     puzzleContainer.appendChild(gridElement);
+                     applyStyling();
+                     addCellInteractivity();
+                     checkErrors();
+                 }
+                 updatePagination(page);
+                 showSolutionBtn.textContent = 'Show Solution';
+                 showSolutionBtn.classList.remove('bg-yellow-500', 'hover:bg-yellow-600');
+                 showSolutionBtn.classList.add('bg-teal-600', 'hover:bg-teal-700');
+            }
+
+            function setupPagination() {
+                paginationControls.innerHTML = '';
+                const puzzleCount = generatedPuzzles.length;
+                if (puzzleCount <= 1) {
+                    paginationControls.classList.add('hidden');
+                    return;
+                }
+                paginationControls.classList.remove('hidden');
+                updatePagination(1);
+            }
+            
+            function updatePagination(currentPage) {
+                const puzzleCount = generatedPuzzles.length;
+                paginationControls.innerHTML = '';
+                if (puzzleCount <= 1) return;
+                const prevBtn = document.createElement('button');
+                prevBtn.textContent = 'Previous';
+                prevBtn.disabled = currentPage === 1;
+                prevBtn.className = 'px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50';
+                prevBtn.addEventListener('click', () => displayPuzzles(currentPage - 1));
+                paginationControls.appendChild(prevBtn);
+                const pageText = document.createElement('span');
+                pageText.textContent = `Puzzle ${currentPage} of ${puzzleCount}`;
+                pageText.className = 'text-sm font-medium text-gray-700';
+                paginationControls.appendChild(pageText);
+                const nextBtn = document.createElement('button');
+                nextBtn.textContent = 'Next';
+                nextBtn.disabled = currentPage === puzzleCount;
+                nextBtn.className = 'px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50';
+                nextBtn.addEventListener('click', () => displayPuzzles(currentPage + 1));
+                paginationControls.appendChild(nextBtn);
+            }
+
+            function toggleLoading(isLoading) {
+                if (isLoading) {
+                    generateBtn.disabled = true;
+                    generateText.textContent = 'Generating...';
+                    generateIcon.classList.add('hidden');
+                    generateLoader.classList.remove('hidden');
+                } else {
+                    generateBtn.disabled = false;
+                    generateText.textContent = 'Generate Puzzles';
+                    generateIcon.classList.remove('hidden');
+                    generateLoader.classList.add('hidden');
+                }
+            }
+
+            function applyStyling() {
+                const root = document.documentElement;
+                root.style.setProperty('--font-family', `'${activeFont}', sans-serif`);
+                root.style.setProperty('--font-weight', activeFontWeight);
+                root.style.setProperty('--font-size', `${fontSizeSlider.value / 16}rem`);
+                root.style.setProperty('--given-text-color', givenColorInput.value);
+                root.style.setProperty('--user-text-color', userColorInput.value);
+                root.style.setProperty('--main-border-color', mainBorderColorInput.value);
+                root.style.setProperty('--box-border-color', boxBorderColorInput.value);
+                root.style.setProperty('--cell-border-color', cellBorderColorInput.value);
+                root.style.setProperty('--main-border-width', `${mainBorderSlider.value}px`);
+                root.style.setProperty('--box-border-width', `${boxBorderSlider.value}px`);
+                root.style.setProperty('--cell-border-width', `${cellBorderSlider.value}px`);
+
+                // Apply title styling to on-screen preview
+                const onScreenTitles = document.querySelectorAll('.puzzle-title-preview');
+                onScreenTitles.forEach(title => {
+                    title.style.fontFamily = `'${activeTitleFont}', sans-serif`;
+                    title.style.fontWeight = activeTitleFontWeight;
+                    title.style.fontSize = `${fontSizeSliderTitle.value}px`;
+                    title.style.color = titleColorInput.value;
+                });
+            }
+
+            function addCellInteractivity() {
+                const cells = document.querySelectorAll('.sudoku-cell');
+                cells.forEach(cell => {
+                    cell.addEventListener('click', () => {
+                        if (cell.classList.contains('given')) {
+                            if (selectedCell) {
+                                selectedCell.classList.remove('selected');
+                                document.querySelectorAll('.sudoku-cell.highlighted').forEach(c => c.classList.remove('highlighted'));
+                                selectedCell = null;
+                            }
+                            return;
+                        }
+                        cells.forEach(c => c.classList.remove('selected', 'highlighted'));
+                        selectedCell = cell;
+                        cell.classList.add('selected');
+                        const row = parseInt(cell.dataset.row);
+                        const col = parseInt(cell.dataset.col);
+                        const boxRows = currentGridSize === 6 ? 2 : Math.sqrt(currentGridSize);
+                        const boxCols = currentGridSize === 6 ? 3 : Math.sqrt(currentGridSize);
+                        const boxStartRow = Math.floor(row / boxRows) * boxRows;
+                        const boxStartCol = Math.floor(col / boxCols) * boxCols;
+                        cells.forEach(c => {
+                            const r = parseInt(c.dataset.row);
+                            const c_ = parseInt(c.dataset.col);
+                            if (r === row || c_ === col || (r >= boxStartRow && r < boxStartRow + boxRows && c_ >= boxStartCol && c_ < boxStartCol + boxCols)) {
+                                c.classList.add('highlighted');
+                            }
+                        });
+                    });
+                });
+            }
+            
+            function handleNumberInput(num) {
+                if (!selectedCell) return;
+                const row = parseInt(selectedCell.dataset.row);
+                const col = parseInt(selectedCell.dataset.col);
+                const userBoard = userBoards[currentPuzzleIndex];
+                const cellData = userBoard.cells[row][col];
+                selectedCell.innerHTML = '';
+                if (isNotesMode) {
+                    cellData.value = 0;
+                    if (num === 0) {
+                        cellData.notes.clear();
+                    } else {
+                        if (cellData.notes.has(num)) {
+                            cellData.notes.delete(num);
+                        } else {
+                            cellData.notes.add(num);
+                        }
+                    }
+                    if (cellData.notes.size > 0) {
+                        selectedCell.appendChild(createNotesGrid(cellData.notes, currentGridSize));
+                    }
+                } else {
+                    cellData.notes.clear();
+                    cellData.value = (cellData.value === num || num === 0) ? 0 : num;
+                    if (cellData.value !== 0) {
+                        selectedCell.textContent = cellData.value;
+                        selectedCell.classList.add('user-filled');
+                    } else {
+                         selectedCell.textContent = '';
+                         selectedCell.classList.remove('user-filled');
+                    }
+                    checkErrors();
+                }
+            }
+            
+            function checkErrors() {
+                const puzzleData = generatedPuzzles[currentPuzzleIndex];
+                if (!puzzleData) return;
+                const userBoard = userBoards[currentPuzzleIndex];
+                const cells = document.querySelectorAll('.sudoku-grid-container[data-puzzle-id="' + currentPuzzleIndex + '"] .sudoku-cell');
+                cells.forEach(cell => cell.classList.remove('error'));
+                if (!autoCheckToggle.checked) return;
+                cells.forEach(cell => {
+                    if (cell.classList.contains('user-filled') && cell.textContent !== '') {
+                        const row = parseInt(cell.dataset.row);
+                        const col = parseInt(cell.dataset.col);
+                        const userValue = userBoard.cells[row][col].value;
+                        const solutionValue = puzzleData.solution[row][col];
+                        if (userValue !== solutionValue) {
+                            cell.classList.add('error');
+                        }
+                    }
+                });
+            }
+
+            function handleShowSolution() {
+                const puzzleData = generatedPuzzles[currentPuzzleIndex];
+                if (!puzzleData) return;
+                const isShowingSolution = showSolutionBtn.textContent === 'Hide Solution';
+                const gridCells = document.querySelectorAll('.sudoku-grid-container[data-puzzle-id="' + currentPuzzleIndex + '"] .sudoku-cell');
+                const titleElement = document.querySelector('.sudoku-grid-container[data-puzzle-id="' + currentPuzzleIndex + '"] .puzzle-title-preview');
+                
+                gridCells.forEach(cell => {
+                    if (!cell.classList.contains('given')) {
+                         cell.innerHTML = '';
+                         cell.classList.remove('user-filled', 'error');
+                         cell.style.color = ''; // Reset color
+                         if (isShowingSolution) {
+                             const row = parseInt(cell.dataset.row);
+                             const col = parseInt(cell.dataset.col);
+                             const userCell = userBoards[currentPuzzleIndex].cells[row][col];
+                             if (userCell.value !== 0) {
+                                 cell.textContent = userCell.value;
+                                 cell.classList.add('user-filled');
+                             } else if (userCell.notes.size > 0) {
+                                 cell.appendChild(createNotesGrid(userCell.notes, currentGridSize));
+                             }
+                         } else {
+                             const row = cell.dataset.row;
+                             const col = cell.dataset.col;
+                             cell.textContent = puzzleData.solution[row][col];
+                             cell.style.color = solutionColorInput.value;
+                         }
+                    }
+                });
+                if (isShowingSolution) {
+                    showSolutionBtn.textContent = 'Show Solution';
+                    showSolutionBtn.classList.remove('bg-yellow-500', 'hover:bg-yellow-600');
+                    showSolutionBtn.classList.add('bg-teal-600', 'hover:bg-teal-700');
+                    if (titleElement) {
+                        const puzzleTitleFormat = puzzleTitleFormatInput.value;
+                        titleElement.textContent = puzzleTitleFormat.replace('#', currentPuzzleIndex + 1);
+                    }
+                    checkErrors();
+                } else {
+                    showSolutionBtn.textContent = 'Hide Solution';
+                    showSolutionBtn.classList.remove('bg-teal-600', 'hover:bg-teal-700');
+                    showSolutionBtn.classList.add('bg-yellow-500', 'hover:bg-yellow-600');
+                    if (titleElement) {
+                        const solutionTitleFormat = solutionTitleFormatInput.value;
+                        titleElement.textContent = solutionTitleFormat.replace('#', currentPuzzleIndex + 1);
+                    }
+                }
+            }
+            
+            function createNumberPad() {
+                numberPad.innerHTML = '';
+                const size = currentGridSize;
+                const cols = Math.ceil(Math.sqrt(size)) + 1;
+                numberPad.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+
+                for (let i = 1; i <= size; i++) {
+                    const btn = document.createElement('button');
+                    btn.textContent = i;
+                    btn.className = 'p-2 text-lg font-bold bg-gray-200 rounded-md hover:bg-gray-300';
+                    btn.addEventListener('click', () => handleNumberInput(i));
+                    numberPad.appendChild(btn);
+                }
+                const eraseBtn = document.createElement('button');
+                eraseBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6 mx-auto"><path d="M21 4H8l-7 8 7 8h13a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z"></path><line x1="18" y1="9" x2="12" y2="15"></line><line x1="12" y1="9" x2="18" y2="15"></line></svg>`;
+                eraseBtn.className = 'p-2 bg-red-200 rounded-md hover:bg-red-300';
+                eraseBtn.addEventListener('click', () => handleNumberInput(0));
+                numberPad.appendChild(eraseBtn);
+            }
+            
+            // --- Font Handling ---
+            function populateFontWeights(weights, targetSelect) {
+                targetSelect.innerHTML = '';
+                weights.forEach(w => {
+                    const option = document.createElement('option');
+                    option.value = w;
+                    option.textContent = w;
+                    targetSelect.appendChild(option);
+                });
+                if (weights.includes('700')) {
+                    targetSelect.value = '700';
+                } else if (weights.includes('400')) {
+                    targetSelect.value = '400';
+                } else {
+                    targetSelect.value = weights[0] || 'normal';
+                }
+                return targetSelect.value;
+            }
+
+            async function getFontDataURL(url) {
+                try {
+                    const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
+                    const response = await fetch(proxyUrl);
+                    if (!response.ok) throw new Error(`CORS proxy request for CSS failed: ${response.statusText}`);
+                    const css = await response.text();
+                    
+                    const fontUrlMatch = css.match(/url\((https:\/\/[^)]+)\)/);
+                    if (!fontUrlMatch) {
+                        console.warn("Could not find a font URL in the provided CSS.");
+                        return null;
+                    }
+
+                    const fontUrl = fontUrlMatch[1];
+                    const fontResponse = await fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(fontUrl)}`);
+                    if (!fontResponse.ok) throw new Error(`CORS proxy request for font file failed: ${fontResponse.statusText}`);
+                    const blob = await fontResponse.blob();
+                    
+                    return new Promise((resolve, reject) => {
+                        const reader = new FileReader();
+                        reader.onloadend = () => resolve(reader.result);
+                        reader.onerror = reject;
+                        reader.readAsDataURL(blob);
+                    });
+                } catch (e) {
+                    console.error("Failed to fetch and encode font via proxy:", e);
+                    messageBox.textContent = "Could not fetch web font for SVG. Using fallback.";
+                    messageBox.style.color = '#f97316'; // orange-500
+                    setTimeout(() => messageBox.textContent = '', 4000);
+                    return null;
+                }
+            }
+
+            // --- Export Logic ---
+            function openExportModal(format) {
+                if(generatedPuzzles.length === 0) {
+                    messageBox.textContent = 'Please generate a puzzle first!';
+                    messageBox.style.color = '#ef4444'; // red-500
+                    setTimeout(() => messageBox.textContent = '', 3000);
+                    return;
+                }
+                currentExportFormat = format;
+                exportModal.classList.remove('hidden');
+                
+                const isPdf = format === 'pdf';
+                exportPdfOptions.style.display = isPdf ? 'block' : 'none';
+                kdpOptionsContainer.parentElement.style.display = isPdf ? 'block' : 'none';
+                pdfHeaderInput.parentElement.style.display = isPdf ? 'block' : 'none';
+                pdfFooterInput.parentElement.style.display = isPdf ? 'block' : 'none';
+                pdfFooterInput.parentElement.nextElementSibling.style.display = isPdf ? 'block' : 'none';
+
+                exportImageOptions.style.display = (format === 'png' || format === 'svg') ? 'block' : 'none';
+                // Only show "export all" option if there are multiple puzzles
+                exportAllPuzzles.parentElement.style.display = generatedPuzzles.length > 1 ? 'flex' : 'none';
+                updateExportPreview();
+            }
+            function closeExportModal() { exportModal.classList.add('hidden'); }
+            
+            async function startExportProcess() {
+                exportProceedText.textContent = 'Processing...';
+                exportLoader.classList.remove('hidden');
+                exportProceedBtn.disabled = true;
+
+                await new Promise(resolve => setTimeout(resolve, 50));
+
+                try {
+                    if (currentExportFormat === 'pdf') {
+                        await downloadPDF();
+                    } else if (exportAllPuzzles.checked && (currentExportFormat === 'png' || currentExportFormat === 'svg')) {
+                        // New: Handle multi-file zip export
+                        const zip = new JSZip();
+                        exportProceedText.textContent = 'Zipping...';
+
+                        for (let i = 0; i < generatedPuzzles.length; i++) {
+                            const puzzleData = generatedPuzzles[i];
+                            if (currentExportFormat === 'svg') {
+                                const svgContent = await generateSVG(puzzleData);
+                                zip.file(`sudoku_${i + 1}.svg`, svgContent);
+                            } else { // png
+                                const canvas = await createExportCanvas(true, i);
+                                const dataUrl = canvas.toDataURL('image/png');
+                                const base64Data = dataUrl.split(',')[1];
+                                zip.file(`sudoku_${i + 1}.png`, base64Data, { base64: true });
+                            }
+                        }
+
+                        const zipBlob = await zip.generateAsync({ type: "blob" });
+                        downloadFile(zipBlob, 'sudoku_puzzles.zip');
+
+                    } else { // png or svg (single file)
+                        if (currentExportFormat === 'svg') {
+                            const svgContent = await generateSVG(generatedPuzzles[currentPuzzleIndex]);
+                            if (svgContent) {
+                                downloadFile(svgContent, 'sudoku.svg', 'image/svg+xml');
+                            }
+                        } else { // png
+                            const canvas = await createExportCanvas(true, currentPuzzleIndex);
+                            const dataUrl = canvas.toDataURL(`image/png`, 1.0);
+                            downloadFile(dataUrl, `sudoku.png`);
+                        }
+                    }
+                } catch (e) {
+                    console.error("Export failed:", e);
+                    messageBox.textContent = 'An error occurred during export.';
+                    messageBox.style.color = '#ef4444';
+                    setTimeout(() => messageBox.textContent = '', 3000);
+                } finally {
+                    exportProceedText.textContent = 'Export';
+                    exportLoader.classList.add('hidden');
+                    exportProceedBtn.disabled = false;
+                    closeExportModal();
+                }
+            }
+
+            function downloadFile(data, filename, mimeType) {
+                const blob = (data instanceof Blob) ? data : (mimeType ? new Blob([data], { type: mimeType }) : dataURLtoBlob(data));
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            }
+            function dataURLtoBlob(dataurl) {
+                let arr = dataurl.split(','), mime = arr[0].match(/:(.*?);/)[1],
+                    bstr = atob(arr[1]), n = bstr.length, u8arr = new Uint8Array(n);
+                while(n--){ u8arr[n] = bstr.charCodeAt(n); }
+                return new Blob([u8arr], {type:mime});
+            }
+            async function updateExportPreview() {
+                 const canvas = await createExportCanvas(false, currentPuzzleIndex);
+                 if (!canvas) return;
+                 const ctx = exportPreviewCanvas.getContext('2d');
+                 const parent = exportPreviewCanvas.parentElement;
+                 const parentWidth = parent.clientWidth - 16;
+                 const parentHeight = parent.clientHeight - 16;
+                 const ratio = Math.min(parentWidth / canvas.width, parentHeight / canvas.height);
+                 exportPreviewCanvas.width = canvas.width * ratio;
+                 exportPreviewCanvas.height = canvas.height * ratio;
+                 ctx.drawImage(canvas, 0, 0, exportPreviewCanvas.width, exportPreviewCanvas.height);
+            }
+            async function createExportCanvas(isFinalExport, puzzleIndex) {
+                const includePuzzle = exportIncludePuzzle.checked;
+                const includeSolution = exportIncludeSolution.checked;
+                const includeTitles = exportIncludeTitles.checked;
+                if (!includePuzzle && !includeSolution) return null;
+                const puzzleData = generatedPuzzles[puzzleIndex];
+                
+                const puzzleTitleFormat = puzzleTitleFormatInput.value;
+                const solutionTitleFormat = solutionTitleFormatInput.value;
+
+                const title = includeTitles ? puzzleTitleFormat.replace('#', isFinalExport ? puzzleData.id + 1 : 'X') : null;
+                const solutionTitle = includeTitles ? solutionTitleFormat.replace('#', isFinalExport ? puzzleData.id + 1 : 'X') : null;
+                
+                const puzzleCanvas = includePuzzle ? await drawGridToCanvas(puzzleData.puzzle, title, { transparent: exportTransparentBg.checked }, 4000, false, null) : null;
+                const solutionCanvas = includeSolution ? await drawGridToCanvas(puzzleData.solution, solutionTitle, { transparent: exportTransparentBg.checked }, 4000, true, puzzleData.puzzle) : null;
+                const gap = 100;
+                const finalWidth = puzzleCanvas ? puzzleCanvas.width : (solutionCanvas ? solutionCanvas.width : 0);
+                if(finalWidth === 0) return null;
+                let finalHeight = 0;
+                if(puzzleCanvas) finalHeight += puzzleCanvas.height;
+                if(solutionCanvas) finalHeight += (puzzleCanvas ? gap : 0) + solutionCanvas.height;
+                const finalCanvas = document.createElement('canvas');
+                finalCanvas.width = finalWidth;
+                finalCanvas.height = finalHeight;
+                const ctx = finalCanvas.getContext('2d');
+                if (!exportTransparentBg.checked || currentExportFormat !== 'png') {
+                    ctx.fillStyle = 'white';
+                    ctx.fillRect(0, 0, finalWidth, finalHeight);
+                }
+                let currentY = 0;
+                if (puzzleCanvas) {
+                    ctx.drawImage(puzzleCanvas, 0, currentY);
+                    currentY += puzzleCanvas.height + gap;
+                }
+                if (solutionCanvas) {
+                    ctx.drawImage(solutionCanvas, 0, currentY);
+                }
+                return finalCanvas;
+            }
+            
+            async function generateSVG(puzzleData) {
+                const { puzzle, solution, id } = puzzleData;
+                const size = puzzle.length;
+                const boxRows = size === 6 ? 2 : Math.sqrt(size);
+                const boxCols = size === 6 ? 3 : Math.sqrt(size);
+                const svgSize = 1000;
+                const cellSize = svgSize / size;
+                const includeTitles = exportIncludeTitles.checked;
+                const puzzleTitleFormat = puzzleTitleFormatInput.value;
+                const solutionTitleFormat = solutionTitleFormatInput.value;
+                const titleHeight = includeTitles ? 80 : 0;
+                const puzzleTitleText = includeTitles ? puzzleTitleFormat.replace('#', id + 1) : '';
+                const solutionTitleText = includeTitles ? solutionTitleFormat.replace('#', id + 1) : '';
+                
+                const getFontPromise = (dataUrl, url) => {
+                    if (dataUrl) {
+                        return Promise.resolve(dataUrl);
+                    }
+                    if (url) {
+                        return getFontDataURL(url);
+                    }
+                    return Promise.resolve(null);
+                };
+
+                const gridFontPromise = getFontPromise(activeFontDataUrl, activeFontUrl);
+                const titleFontPromise = getFontPromise(activeTitleFontDataUrl, activeTitleFontUrl);
+
+                const [fontDataUrl, titleFontDataUrl] = await Promise.all([gridFontPromise, titleFontPromise]);
+
+
+                const createSvgGrid = (board, titleText, isSolutionGrid) => {
+                    let gridSvg = `<g>`;
+                    gridSvg += `<rect x="0" y="0" width="${svgSize}" height="${svgSize}" fill="white" />`;
+
+                    if (parseFloat(cellBorderSlider.value) > 0) {
+                        for (let i = 1; i < size; i++) {
+                            if (i % boxCols !== 0) gridSvg += `<line x1="${i * cellSize}" y1="0" x2="${i * cellSize}" y2="${svgSize}" class="light" />`;
+                            if (i % boxRows !== 0) gridSvg += `<line x1="0" y1="${i * cellSize}" x2="${svgSize}" y2="${i * cellSize}" class="light" />`;
+                        }
+                    }
+                    
+                    if (parseFloat(boxBorderSlider.value) > 0) {
+                        for (let i = 1; i < size; i++) {
+                            if (i % boxCols === 0) gridSvg += `<line x1="${i * cellSize}" y1="0" x2="${i * cellSize}" y2="${svgSize}" class="heavy" />`;
+                            if (i % boxRows === 0) gridSvg += `<line x1="0" y1="${i * cellSize}" x2="${svgSize}" y2="${i * cellSize}" class="heavy" />`;
+                        }
+                    }
+                    
+                    for (let r = 0; r < size; r++) {
+                        for (let c = 0; c < size; c++) {
+                            if (board[r][c] !== 0) {
+                                const dynamicFontSize = (parseFloat(fontSizeSlider.value) / 28) * (cellSize * 0.6);
+                                let numberColor;
+                                if (isSolutionGrid) {
+                                    numberColor = (puzzle[r][c] !== 0) ? givenColorInput.value : solutionColorInput.value;
+                                } else {
+                                    numberColor = givenColorInput.value;
+                                }
+                                gridSvg += `<text x="${c * cellSize + cellSize / 2}" y="${r * cellSize + cellSize / 2}" class="num" style="font-size: ${dynamicFontSize}px; fill: ${numberColor};">${board[r][c]}</text>`;
+                            }
+                        }
+                    }
+                    
+                    if (parseFloat(mainBorderSlider.value) > 0) {
+                        const borderWidth = parseFloat(mainBorderSlider.value) * 2;
+                        const halfBorder = borderWidth / 2;
+                        // Inset the rectangle by half the border width to keep the stroke inside the bounds.
+                        gridSvg += `<rect x="${halfBorder}" y="${halfBorder}" width="${svgSize - borderWidth}" height="${svgSize - borderWidth}" class="outer" />`;
+                    }
+                    if (titleText) {
+                       const titleFontSize = (parseFloat(fontSizeSliderTitle.value) / 40) * 48;
+                       gridSvg += `<text x="${svgSize/2}" y="-30" class="title" style="font-size: ${titleFontSize}px;">${titleText}</text>`;
+                    }
+                    gridSvg += `</g>`;
+                    return gridSvg;
+                };
+
+                const includePuzzle = exportIncludePuzzle.checked;
+                const includeSolution = exportIncludeSolution.checked;
+                const gap = 100;
+                let totalHeight = 0;
+                if(includePuzzle) totalHeight += svgSize + titleHeight;
+                if(includeSolution) totalHeight += (includePuzzle ? gap : 0) + svgSize + titleHeight;
+                if (totalHeight === 0) return null;
+
+                let svgContent = `<svg width="${svgSize}" height="${totalHeight}" xmlns="http://www.w3.org/2000/svg">`;
+                
+                svgContent += `<defs><style>`;
+                if (fontDataUrl) {
+                    svgContent += `@font-face { font-family: '${activeFont}'; src: url(${fontDataUrl}); }`;
+                }
+                if (titleFontDataUrl) {
+                     svgContent += `@font-face { font-family: '${activeTitleFont}'; src: url(${titleFontDataUrl}); }`;
+                }
+
+                svgContent += `
+                    .heavy { stroke: ${boxBorderColorInput.value}; stroke-width: ${parseFloat(boxBorderSlider.value) * 2}; }
+                    .light { stroke: ${cellBorderColorInput.value}; stroke-width: ${parseFloat(cellBorderSlider.value) * 2}; }
+                    .outer { fill: none; stroke: ${mainBorderColorInput.value}; stroke-width: ${parseFloat(mainBorderSlider.value) * 2}; }
+                    .num { font-family: '${activeFont}', sans-serif; font-weight: ${activeFontWeight}; text-anchor: middle; dominant-baseline: middle; }
+                    .title { font-family: '${activeTitleFont}', sans-serif; font-weight: ${activeTitleFontWeight}; text-anchor: middle; fill: ${titleColorInput.value}; }
+                </style></defs>`;
+                
+                svgContent += `<rect width="100%" height="100%" fill="${exportTransparentBg.checked && currentExportFormat === 'svg' ? 'none' : 'white'}"/>`;
+
+                let yOffset = titleHeight;
+                if(includePuzzle) {
+                    svgContent += `<g transform="translate(0, ${yOffset})">${createSvgGrid(puzzle, puzzleTitleText, false)}</g>`;
+                    yOffset += svgSize + gap;
+                }
+                if(includeSolution) {
+                    svgContent += `<g transform="translate(0, ${yOffset})">${createSvgGrid(solution, solutionTitleText, true)}</g>`;
+                }
+                
+                svgContent += `</svg>`;
+                return svgContent;
+            }
+            
+            async function downloadPDF() {
+                const { jsPDF } = window.jspdf;
+                const includePuzzle = exportIncludePuzzle.checked;
+                const includeSolution = exportIncludeSolution.checked;
+                const includeTitles = exportIncludeTitles.checked;
+                const puzzleTitleFormat = puzzleTitleFormatInput.value;
+                const solutionTitleFormat = solutionTitleFormatInput.value;
+                const solutionOnNewPage = solutionsOnSeparatePages.checked;
+                const headerText = pdfHeaderInput.value.trim();
+                const footerText = pdfFooterInput.value.trim();
+
+                // Build a list of all items to be rendered in the PDF
+                const renderItems = [];
+                const puzzleItems = [];
+                const solutionItems = [];
+
+                if (includePuzzle) {
+                    for (let i = 0; i < generatedPuzzles.length; i++) {
+                        puzzleItems.push({ type: 'puzzle', index: i });
+                    }
+                }
+                if (includeSolution) {
+                    for (let i = 0; i < generatedPuzzles.length; i++) {
+                        solutionItems.push({ type: 'solution', index: i });
+                    }
+                }
+
+                if (solutionOnNewPage) {
+                    renderItems.push(...puzzleItems, ...solutionItems);
+                } else {
+                    for (let i = 0; i < generatedPuzzles.length; i++) {
+                        if (puzzleItems[i]) renderItems.push(puzzleItems[i]);
+                        if (solutionItems[i]) renderItems.push(solutionItems[i]);
+                    }
+                }
+
+                if (renderItems.length === 0) return;
+
+
+                if (kdpEnableToggle.checked) {
+                    // --- KDP PDF Export Logic ---
+                    let trimWidth, trimHeight;
+
+                    if (kdpTrimSizeSelect.value === 'custom') {
+                        trimWidth = parseFloat(kdpCustomWidthInput.value) || 6;
+                        trimHeight = parseFloat(kdpCustomHeightInput.value) || 9;
+                    } else {
+                        const trimSizeParts = kdpTrimSizeSelect.value.split('x').map(parseFloat);
+                        trimWidth = trimSizeParts[0];
+                        trimHeight = trimSizeParts[1];
+                    }
+
+                    const hasBleed = kdpBleedCheckbox.checked;
+
+                    const puzzlesPerPage = parseInt(pdfLayoutSelect.value, 10);
+                    const totalPages = Math.ceil(renderItems.length / puzzlesPerPage);
+
+                    let insideMargin, outsideMargin, topMargin, bottomMargin;
+                    
+                    if (kdpCustomMarginsToggle.checked) {
+                        topMargin = parseFloat(kdpMarginTopInput.value) || 0.375;
+                        bottomMargin = parseFloat(kdpMarginBottomInput.value) || 0.375;
+                        insideMargin = parseFloat(kdpMarginInsideInput.value) || 0.375;
+                        outsideMargin = parseFloat(kdpMarginOutsideInput.value) || 0.375;
+                    } else {
+                        if (totalPages >= 24 && totalPages <= 150) insideMargin = 0.375;
+                        else if (totalPages >= 151 && totalPages <= 300) insideMargin = 0.5;
+                        else if (totalPages >= 301 && totalPages <= 500) insideMargin = 0.625;
+                        else if (totalPages >= 501 && totalPages <= 700) insideMargin = 0.75;
+                        else if (totalPages >= 701 && totalPages <= 828) insideMargin = 0.875;
+                        else insideMargin = 0.375; 
+
+                        outsideMargin = hasBleed ? 0.375 : 0.25;
+                        topMargin = outsideMargin;
+                        bottomMargin = outsideMargin;
+                    }
+
+                    let pageWidth = trimWidth;
+                    let pageHeight = trimHeight;
+                    if (hasBleed) {
+                        pageWidth += 0.125;
+                        pageHeight += 0.25;
+                    }
+
+                    const pdf = new jsPDF({ orientation: 'p', unit: 'in', format: [pageWidth, pageHeight] });
+                    
+                    const layoutConfig = {
+                        1: { rows: 1, cols: 1, gap: 0 },
+                        2: { rows: 2, cols: 1, gap: 0.25 },
+                        4: { rows: 2, cols: 2, gap: 0.25 },
+                        6: { rows: 3, cols: 2, gap: 0.15 }
+                    };
+                    const layout = layoutConfig[puzzlesPerPage];
+                    let pageNum = 1;
+
+                    for (let i = 0; i < renderItems.length; i += puzzlesPerPage) {
+                        if (i > 0) pdf.addPage();
+                        
+                        const headerHeight = headerText ? 0.4 : 0;
+                        const footerHeight = footerText ? 0.4 : 0;
+
+                        if (headerText) {
+                            pdf.setFontSize(10);
+                            pdf.text(headerText, pageWidth / 2, topMargin - 0.2, { align: 'center' });
+                        }
+
+                        const pageItems = renderItems.slice(i, i + puzzlesPerPage);
+                        
+                        const isRightPage = pageNum % 2 !== 0;
+                        const currentInsideMargin = isRightPage ? insideMargin : outsideMargin;
+                        
+                        const contentWidth = trimWidth - insideMargin - outsideMargin;
+                        const contentHeight = trimHeight - topMargin - bottomMargin - headerHeight - footerHeight;
+                        
+                        const itemWidth = (contentWidth - (layout.cols - 1) * layout.gap) / layout.cols;
+                        const itemHeight = (contentHeight - (layout.rows - 1) * layout.gap) / layout.rows;
+                        
+                        // Calculate required canvas size for 300 DPI
+                        const canvasOutputSize = itemWidth * 300;
+
+
+                        for (let j = 0; j < pageItems.length; j++) {
+                            const item = pageItems[j];
+                            const puzzleData = generatedPuzzles[item.index];
+                            let canvas;
+
+                            if (item.type === 'puzzle') {
+                                const title = includeTitles ? puzzleTitleFormat.replace('#', item.index + 1) : null;
+                                canvas = await drawGridToCanvas(puzzleData.puzzle, title, {}, canvasOutputSize, false, null);
+                            } else { // solution
+                                const title = includeTitles ? solutionTitleFormat.replace('#', item.index + 1) : null;
+                                canvas = await drawGridToCanvas(puzzleData.solution, title, {}, canvasOutputSize, true, puzzleData.puzzle);
+                            }
+
+                            const row = Math.floor(j / layout.cols);
+                            const col = j % layout.cols;
+
+                            const x = currentInsideMargin + col * (itemWidth + layout.gap);
+                            const y = topMargin + headerHeight + row * (itemHeight + layout.gap);
+
+                            const imgProps = pdf.getImageProperties(canvas);
+                            const ratio = imgProps.width / imgProps.height;
+                            let imgWidth = itemWidth;
+                            let imgHeight = itemWidth / ratio;
+                            if (imgHeight > itemHeight) {
+                                imgHeight = itemHeight;
+                                imgWidth = itemHeight * ratio;
+                            }
+                            
+                            const xOffset = (itemWidth - imgWidth) / 2;
+                            const yOffset = (itemHeight - imgHeight) / 2;
+
+                            pdf.addImage(canvas.toDataURL('image/png', 1.0), 'PNG', x + xOffset, y + yOffset, imgWidth, imgHeight);
+                        }
+
+
+                        if (footerText) {
+                            pdf.setFontSize(10);
+                            const footer = footerText.replace('%p', pageNum).replace('%t', totalPages);
+                             pdf.text(footer, pageWidth / 2, trimHeight - bottomMargin + 0.3, { align: 'center' });
+                        }
+                        pageNum++;
+                    }
+                    pdf.save('sudoku_kdp_book.pdf');
+
+                } else {
+                    // --- Original PDF Export Logic ---
+                    const pdf = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
+                    const puzzlesPerPage = parseInt(pdfLayoutSelect.value, 10);
+                    const MARGIN = 15;
+                    const A4_WIDTH = 210;
+                    const A4_HEIGHT = 297;
+                    const CONTENT_WIDTH = A4_WIDTH - MARGIN * 2;
+                    const CONTENT_HEIGHT = A4_HEIGHT - MARGIN * 2 - (headerText ? 10 : 0) - (footerText ? 10 : 0);
+                    const layoutConfig = {1: {rows: 1, cols: 1, gap: 0}, 2: {rows: 2, cols: 1, gap: 10}, 4: {rows: 2, cols: 2, gap: 10}, 6: {rows: 3, cols: 2, gap: 5}};
+                    const layout = layoutConfig[puzzlesPerPage];
+                    const itemWidth = (CONTENT_WIDTH - (layout.cols - 1) * layout.gap) / layout.cols;
+                    const itemHeight = (CONTENT_HEIGHT - (layout.rows - 1) * layout.gap) / layout.rows;
+                    
+                    const itemWidthInInches = itemWidth / 25.4;
+                    const canvasOutputSize = itemWidthInInches * 300;
+
+                    const totalPages = Math.ceil(renderItems.length / puzzlesPerPage);
+                    let pageNum = 1;
+
+                    for (let i = 0; i < renderItems.length; i += puzzlesPerPage) {
+                        if (i > 0) pdf.addPage();
+                        
+                        if (headerText) {
+                            pdf.setFontSize(10);
+                            pdf.text(headerText, A4_WIDTH / 2, MARGIN - 5, { align: 'center' });
+                        }
+
+                        const pageItems = renderItems.slice(i, i + puzzlesPerPage);
+
+                        for (let j = 0; j < pageItems.length; j++) {
+                            const item = pageItems[j];
+                            const puzzleData = generatedPuzzles[item.index];
+                            let canvas;
+
+                             if (item.type === 'puzzle') {
+                                const title = includeTitles ? puzzleTitleFormat.replace('#', item.index + 1) : null;
+                                canvas = await drawGridToCanvas(puzzleData.puzzle, title, {}, canvasOutputSize, false, null);
+                            } else { // solution
+                                const title = includeTitles ? solutionTitleFormat.replace('#', item.index + 1) : null;
+                                canvas = await drawGridToCanvas(puzzleData.solution, title, {}, canvasOutputSize, true, puzzleData.puzzle);
+                            }
+
+                            const row = Math.floor(j / layout.cols);
+                            const col = j % layout.cols;
+                            const x = MARGIN + col * (itemWidth + layout.gap);
+                            const y = MARGIN + (headerText ? 10 : 0) + row * (itemHeight + layout.gap);
+                            const imgProps = pdf.getImageProperties(canvas);
+                            const ratio = imgProps.width / imgProps.height;
+                            let imgWidth = itemWidth;
+                            let imgHeight = itemWidth / ratio;
+                            if (imgHeight > itemHeight) {
+                                imgHeight = itemHeight;
+                                imgWidth = itemHeight * ratio;
+                            }
+                            const xOffset = (itemWidth - imgWidth) / 2;
+                            const yOffset = (itemHeight - imgHeight) / 2;
+                            pdf.addImage(canvas.toDataURL('image/png', 1.0), 'PNG', x + xOffset, y + yOffset, imgWidth, imgHeight);
+                        }
+
+
+                        if (footerText) {
+                            pdf.setFontSize(10);
+                            const footer = footerText.replace('%p', pageNum).replace('%t', totalPages);
+                            pdf.text(footer, A4_WIDTH / 2, A4_HEIGHT - MARGIN + 5, { align: 'center' });
+                        }
+                        pageNum++;
+                    }
+                    pdf.save('sudoku_puzzles.pdf');
+                }
+            }
+            
+            async function drawGridToCanvas(board, title, options = {}, outputSize = 4000, isSolution = false, originalPuzzle = null) {
+                const size = board.length;
+                const boxRows = size === 6 ? 2 : Math.sqrt(size);
+                const boxCols = size === 6 ? 3 : Math.sqrt(size);
+                const canvas = document.createElement('canvas');
+                
+                const canvasSize = outputSize;
+                const scale = canvasSize / 500; // Keep scale proportional
+                const titleHeight = title ? (canvasSize / 16) : 0; // Make title height proportional
+                canvas.width = canvasSize;
+                canvas.height = canvasSize + titleHeight;
+                const ctx = canvas.getContext('2d');
+                const cellSize = canvasSize / size;
+
+                const gridFontSpec = `${activeFontWeight} 10px "${activeFont}"`;
+                const titleFontSpec = `${activeTitleFontWeight} 10px "${activeTitleFont}"`;
+                await Promise.all([document.fonts.load(gridFontSpec), document.fonts.load(titleFontSpec)]);
+
+                if (!options.transparent || currentExportFormat !== 'png') {
+                    ctx.fillStyle = 'white';
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+                }
+                if (title) {
+                    ctx.fillStyle = titleColorInput.value;
+                    const titleFontSize = (parseFloat(fontSizeSliderTitle.value) / 40) * (canvasSize / 33.33);
+                    ctx.font = `bold ${titleFontSize}px "${activeTitleFont}"`;
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText(title, canvasSize / 2, titleHeight / 2);
+                }
+                ctx.translate(0, titleHeight);
+                
+                // Draw cell lines first
+                if (parseFloat(cellBorderSlider.value) > 0) {
+                    const lineWidth = parseFloat(cellBorderSlider.value) * scale;
+                    ctx.lineWidth = lineWidth;
+                    ctx.strokeStyle = cellBorderColorInput.value;
+                    for (let i = 1; i < size; i++) {
+                        if (i % boxCols !== 0) {
+                            ctx.beginPath();
+                            ctx.moveTo(i * cellSize, 0);
+                            ctx.lineTo(i * cellSize, canvasSize);
+                            ctx.stroke();
+                        }
+                        if (i % boxRows !== 0) {
+                            ctx.beginPath();
+                            ctx.moveTo(0, i * cellSize);
+                            ctx.lineTo(canvasSize, i * cellSize);
+                            ctx.stroke();
+                        }
+                    }
+                }
+
+                // Draw box lines
+                if (parseFloat(boxBorderSlider.value) > 0) {
+                    const lineWidth = parseFloat(boxBorderSlider.value) * scale;
+                    ctx.lineWidth = lineWidth;
+                    ctx.strokeStyle = boxBorderColorInput.value;
+                    for (let i = 1; i < size; i++) {
+                        if (i % boxCols === 0) {
+                            ctx.beginPath();
+                            ctx.moveTo(i * cellSize, 0);
+                            ctx.lineTo(i * cellSize, canvasSize);
+                            ctx.stroke();
+                        }
+                        if (i % boxRows === 0) {
+                            ctx.beginPath();
+                            ctx.moveTo(0, i * cellSize);
+                            ctx.lineTo(canvasSize, i * cellSize);
+                            ctx.stroke();
+                        }
+                    }
+                }
+
+                // Draw numbers
+                for (let r = 0; r < size; r++) {
+                    for (let c = 0; c < size; c++) {
+                        if (board[r][c] !== 0) {
+                            let numberColor = givenColorInput.value;
+                            if (isSolution) {
+                                if (originalPuzzle && originalPuzzle[r][c] !== 0) {
+                                    numberColor = givenColorInput.value;
+                                } else {
+                                    numberColor = solutionColorInput.value;
+                                }
+                            }
+                            ctx.fillStyle = numberColor;
+                            const dynamicFontSize = (parseFloat(fontSizeSlider.value) / 28) * (cellSize * 0.6);
+                            ctx.font = `${activeFontWeight} ${dynamicFontSize}px "${activeFont}"`;
+                            ctx.textAlign = 'center';
+                            ctx.textBaseline = 'middle';
+                            ctx.fillText(board[r][c], c * cellSize + cellSize / 2, r * cellSize + cellSize / 2);
+                        }
+                    }
+                }
+                
+                // Draw main outer border last
+                if (parseFloat(mainBorderSlider.value) > 0) {
+                    const borderWidth = parseFloat(mainBorderSlider.value) * scale;
+                    const halfBorder = borderWidth / 2;
+                    ctx.beginPath();
+                    ctx.strokeStyle = mainBorderColorInput.value;
+                    ctx.lineWidth = borderWidth;
+                    // Inset the rectangle by half its border width. This ensures the outer edge
+                    // of the stroke aligns perfectly with the grid's boundary (e.g., at y=0) and
+                    // prevents any part of the stroke from being drawn in negative coordinates
+                    // relative to the translated origin, which can cause rendering artifacts. This
+                    // robustly fixes the thicker top border bug.
+                    ctx.strokeRect(halfBorder, halfBorder, canvasSize - borderWidth, canvasSize - borderWidth);
+                }
+                return canvas;
+            }
+            
+            // --- Event Listeners ---
+            generateBtn.addEventListener('click', handleGeneration);
+            showSolutionBtn.addEventListener('click', handleShowSolution);
+            gridSizeSelect.addEventListener('change', updateDifficultyOptions);
+            
+            [givenColorInput, userColorInput, solutionColorInput, mainBorderColorInput, boxBorderColorInput, cellBorderColorInput, fontSizeSlider, mainBorderSlider, boxBorderSlider, cellBorderSlider, titleColorInput, fontSizeSliderTitle, puzzleTitleFormatInput, solutionTitleFormatInput].forEach(el => {
+                if (el) { // Check if element exists before adding listener
+                    el.addEventListener('input', () => {
+                        if (el.id === 'font-size-slider') fontSizeValue.textContent = el.value;
+                        if (el.id === 'font-size-slider-title') fontSizeValueTitle.textContent = el.value;
+                        if (el.id === 'main-border-slider') mainBorderValue.textContent = el.value;
+                        if (el.id === 'box-border-slider') boxBorderValue.textContent = el.value;
+                        if (el.id === 'cell-border-slider') cellBorderValue.textContent = el.value;
+                        
+                        if (generatedPuzzles.length > 0) {
+                            displayPuzzles(currentPuzzleIndex + 1);
+                        } else {
+                            applyStyling();
+                        }
+                    });
+                }
+            });
+            
+            modeNumberBtn.addEventListener('click', () => {
+                isNotesMode = false;
+                modeNumberBtn.classList.replace('bg-gray-200', 'bg-indigo-600');
+                modeNumberBtn.classList.replace('text-gray-700', 'text-white');
+                modeNotesBtn.classList.replace('bg-indigo-600', 'bg-gray-200');
+                modeNotesBtn.classList.replace('text-white', 'text-gray-700');
+            });
+
+            modeNotesBtn.addEventListener('click', () => {
+                isNotesMode = true;
+                modeNotesBtn.classList.replace('bg-gray-200', 'bg-indigo-600');
+                modeNotesBtn.classList.replace('text-gray-700', 'text-white');
+                modeNumberBtn.classList.replace('bg-indigo-600', 'bg-gray-200');
+                modeNumberBtn.classList.replace('text-white', 'text-gray-700');
+            });
+            
+            autoCheckToggle.addEventListener('change', checkErrors);
+
+            document.querySelectorAll('.export-btn').forEach(btn => {
+                btn.addEventListener('click', () => openExportModal(btn.dataset.exportFormat));
+            });
+            exportCloseBtn.addEventListener('click', closeExportModal);
+            exportCancelBtn.addEventListener('click', closeExportModal);
+            exportProceedBtn.addEventListener('click', startExportProcess);
+            
+            const exportOptionControls = [exportIncludePuzzle, exportIncludeSolution, solutionsOnSeparatePages, exportTransparentBg, exportIncludeTitles, puzzleTitleFormatInput, solutionTitleFormatInput, exportAllPuzzles, kdpEnableToggle, kdpTrimSizeSelect, kdpBleedCheckbox, kdpCustomWidthInput, kdpCustomHeightInput, kdpCustomMarginsToggle, kdpMarginTopInput, kdpMarginBottomInput, kdpMarginInsideInput, kdpMarginOutsideInput, pdfLayoutSelect];
+            exportOptionControls.forEach(el => {
+                if (el) { // Check if element exists before adding listener
+                    el.addEventListener('input', updateExportPreview);
+                }
+            });
+
+            kdpEnableToggle.addEventListener('change', () => {
+                const isEnabled = kdpEnableToggle.checked;
+                kdpOptionsContainer.classList.toggle('hidden', !isEnabled);
+            });
+
+            kdpTrimSizeSelect.addEventListener('change', () => {
+                const isCustom = kdpTrimSizeSelect.value === 'custom';
+                kdpCustomTrimSizeContainer.classList.toggle('hidden', !isCustom);
+            });
+
+            kdpCustomMarginsToggle.addEventListener('change', () => {
+                const isEnabled = kdpCustomMarginsToggle.checked;
+                kdpCustomMarginsContainer.classList.toggle('hidden', !isEnabled);
+                kdpAutoMarginNote.classList.toggle('hidden', isEnabled);
+            });
+
+
+            // --- Font Listeners ---
+            function setupFontHandlers(type) {
+                const isTitle = type === 'title';
+                const fontMethodSelectEl = isTitle ? fontMethodSelectTitle : fontMethodSelect;
+                const googleContainer = isTitle ? googleFontContainerTitle : googleFontContainer;
+                const urlContainer = isTitle ? urlFontContainerTitle : urlFontContainer;
+                const uploadContainer = isTitle ? uploadFontContainerTitle : uploadFontContainer;
+                const googleInput = isTitle ? googleFontInputTitle : googleFontInput;
+                const addGoogleBtn = isTitle ? addGoogleFontBtnTitle : addGoogleFontBtn;
+                const urlCssInput = isTitle ? urlFontCssInputTitle : urlFontCssInput;
+                const urlFamilyInput = isTitle ? urlFontFamilyInputTitle : urlFontFamilyInput;
+                const addUrlBtn = isTitle ? addUrlFontBtnTitle : addUrlFontBtn;
+                const uploader = isTitle ? customFontUploaderTitle : customFontUploader;
+                const weightSelect = isTitle ? fontWeightSelectTitle : fontWeightSelect;
+                
+                fontMethodSelectEl.addEventListener('change', () => {
+                    const selectedValue = fontMethodSelectEl.value;
+                    googleContainer.classList.add('hidden');
+                    urlContainer.classList.add('hidden');
+                    uploadContainer.classList.add('hidden');
+
+                    if (selectedValue === 'google') googleContainer.classList.remove('hidden');
+                    else if (selectedValue === 'url') urlContainer.classList.remove('hidden');
+                    else if (selectedValue === 'upload') uploadContainer.classList.remove('hidden');
+                    else {
+                        const [fontFamily, weightsStr] = selectedValue.split(':');
+                        const weights = weightsStr.split(',');
+                        if (isTitle) {
+                            activeTitleFont = fontFamily;
+                            activeTitleFontUrl = preloadedFonts[fontFamily].url;
+                            activeTitleFontDataUrl = null;
+                            activeTitleFontWeight = populateFontWeights(weights, weightSelect);
+                        } else {
+                            activeFont = fontFamily;
+                            activeFontUrl = preloadedFonts[fontFamily].url;
+                            activeFontDataUrl = null;
+                            activeFontWeight = populateFontWeights(weights, weightSelect);
+                        }
+                        if (generatedPuzzles.length > 0) {
+                            displayPuzzles(currentPuzzleIndex + 1);
+                        } else {
+                            applyStyling();
+                        }
+                    }
+                });
+
+                addGoogleBtn.addEventListener('click', () => {
+                    const linkTag = googleInput.value;
+                    const hrefMatch = linkTag.match(/href="([^"]+)"/);
+                    if (!hrefMatch) return;
+                    const href = hrefMatch[1];
+
+                    const familyMatch = href.match(/family=([^&:]+)/);
+                    if (!familyMatch) return;
+                    const fontFamily = familyMatch[1].replace(/\+/g, ' ');
+                    
+                    const weights = [];
+                    const wghtMatch = href.match(/wght@([\d;..]+)/);
+                    if (wghtMatch) {
+                        const wghtString = wghtMatch[1];
+                        if (wghtString.includes('..')) {
+                            const [start, end] = wghtString.split('..').map(Number);
+                            for (let i = start; i <= end; i += 100) { weights.push(i.toString()); }
+                        } else {
+                            weights.push(...wghtString.split(';'));
+                        }
+                    }
+                    if(weights.length === 0) weights.push('400', '700');
+                    
+                    const newLink = document.createElement('link');
+                    newLink.rel = 'stylesheet';
+                    newLink.href = href;
+                    document.head.appendChild(newLink);
+
+                    if (isTitle) {
+                        activeTitleFont = fontFamily;
+                        activeTitleFontUrl = href;
+                        activeTitleFontDataUrl = null;
+                        activeTitleFontWeight = populateFontWeights(weights, weightSelect);
+                    } else {
+                        activeFont = fontFamily;
+                        activeFontUrl = href;
+                        activeFontDataUrl = null;
+                        activeFontWeight = populateFontWeights(weights, weightSelect);
+                    }
+                    if (generatedPuzzles.length > 0) {
+                        displayPuzzles(currentPuzzleIndex + 1);
+                    } else {
+                        applyStyling();
+                    }
+                });
+
+                addUrlBtn.addEventListener('click', () => {
+                    const cssUrl = urlCssInput.value.trim();
+                    const fontFamily = urlFamilyInput.value.trim();
+                    if (!cssUrl || !fontFamily) return;
+
+                    const newLink = document.createElement('link');
+                    newLink.rel = 'stylesheet';
+                    newLink.href = cssUrl;
+                    document.head.appendChild(newLink);
+                    
+                    const weights = ['100', '200', '300', '400', '500', '600', '700', '800', '900', 'normal', 'bold'];
+                    if (isTitle) {
+                        activeTitleFont = fontFamily;
+                        activeTitleFontUrl = cssUrl;
+                        activeTitleFontDataUrl = null;
+                        activeTitleFontWeight = populateFontWeights(weights, weightSelect);
+                    } else {
+                        activeFont = fontFamily;
+                        activeFontUrl = cssUrl;
+                        activeFontDataUrl = null;
+                        activeFontWeight = populateFontWeights(weights, weightSelect);
+                    }
+                    if (generatedPuzzles.length > 0) {
+                        displayPuzzles(currentPuzzleIndex + 1);
+                    } else {
+                        applyStyling();
+                    }
+                });
+
+                uploader.addEventListener('change', (e) => {
+                    const file = e.target.files[0];
+                    if (!file) return;
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                        const fontName = file.name.split('.').slice(0, -1).join('.');
+                        const fontDataUrl = event.target.result;
+                        const newStyle = `@font-face { font-family: '${fontName}'; src: url(${fontDataUrl}); }`;
+                        document.getElementById('dynamic-styles').innerHTML += newStyle;
+                        
+                        const weights = ['normal', 'bold', '100', '200', '300', '400', '500', '600', '700', '800', '900'];
+                        if (isTitle) {
+                            activeTitleFont = fontName;
+                            activeTitleFontDataUrl = fontDataUrl;
+                            activeTitleFontUrl = null;
+                            activeTitleFontWeight = populateFontWeights(weights, weightSelect);
+                        } else {
+                            activeFont = fontName;
+                            activeFontDataUrl = fontDataUrl;
+                            activeFontUrl = null;
+                            activeFontWeight = populateFontWeights(weights, weightSelect);
+                        }
+                        if (generatedPuzzles.length > 0) {
+                            displayPuzzles(currentPuzzleIndex + 1);
+                        } else {
+                            applyStyling();
+                        }
+                    };
+                    reader.readAsDataURL(file);
+                });
+
+                weightSelect.addEventListener('change', () => {
+                    if (isTitle) {
+                        activeTitleFontWeight = weightSelect.value;
+                    } else {
+                        activeFontWeight = weightSelect.value;
+                    }
+                    if (generatedPuzzles.length > 0) {
+                        displayPuzzles(currentPuzzleIndex + 1);
+                    } else {
+                        applyStyling();
+                    }
+                });
+            }
+
+            // --- Initial Setup ---
+            updateDifficultyOptions();
+            createNumberPad();
+            setupFontHandlers('grid');
+            setupFontHandlers('title');
+            fontMethodSelect.dispatchEvent(new Event('change'));
+            fontMethodSelectTitle.dispatchEvent(new Event('change'));
+        });
+    </script>
+</body>
+</html>
+
+
