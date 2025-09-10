@@ -166,12 +166,27 @@
                     <div id="export-pdf-options" class="space-y-2 border-t pt-4">
                         <h4 class="font-semibold text-gray-800">PDF Options</h4>
                         <div>
-                            <label for="pdf-layout" class="block text-sm font-medium text-gray-700">Layout</label>
-                            <select id="pdf-layout" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                            <label for="pdf-layout-puzzles" class="block text-sm font-medium text-gray-700">Puzzles per Page</label>
+                            <select id="pdf-layout-puzzles" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
                                 <option value="1">1 per page</option>
                                 <option value="2">2 per page</option>
                                 <option value="4" selected>4 per page</option>
                                 <option value="6">6 per page</option>
+                                <option value="8">8 per page</option>
+                                <option value="9">9 per page</option>
+                                <option value="12">12 per page</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="pdf-layout-solutions" class="block text-sm font-medium text-gray-700">Solutions per Page</label>
+                            <select id="pdf-layout-solutions" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                                <option value="1">1 per page</option>
+                                <option value="2">2 per page</option>
+                                <option value="4" selected>4 per page</option>
+                                <option value="6">6 per page</option>
+                                <option value="8">8 per page</option>
+                                <option value="9">9 per page</option>
+                                <option value="12">12 per page</option>
                             </select>
                         </div>
                         <label class="flex items-center space-x-2">
@@ -310,16 +325,16 @@
                         </div>
                          <div>
                             <label for="puzzle-count" class="block text-sm font-medium text-gray-700">Number of Puzzles</label>
-                            <input type="number" id="puzzle-count" value="1" min="1" max="100" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                            <input type="number" id="puzzle-count" value="1" min="1" max="1000" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
                         </div>
                     </div>
 
                     <!-- Styling & Layout -->
                     <div class="space-y-4 border-t pt-4">
-                         <h2 class="text-xl font-bold text-gray-800 border-b pb-2">2. Styling & Layout</h2>
+                        <h2 class="text-xl font-bold text-gray-800 border-b pb-2">2. Styling & Layout</h2>
                         
                         <!-- Title Font Selection -->
-                         <div class="space-y-2 border-t pt-4">
+                        <div class="space-y-2 border-t pt-4">
                              <h3 class="text-md font-semibold text-gray-700">Titles Font</h3>
                              <div>
                                  <label for="font-method-select-title" class="block text-sm font-medium text-gray-700">Font Family</label>
@@ -364,19 +379,19 @@
                                  <label for="custom-font-uploader-title" class="block text-sm font-medium text-gray-700">Upload Font File</label>
                                  <input type="file" id="custom-font-uploader-title" accept=".ttf,.otf,.woff,.woff2" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-600 hover:file:bg-indigo-100">
                              </div>
-                                <div>
-                                    <label for="font-weight-select-title" class="block text-sm font-medium text-gray-700">Weight</label>
-                                    <select id="font-weight-select-title" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"></select>
-                                </div>
-                                <div>
-                                    <label for="font-size-slider-title" class="block text-sm font-medium text-gray-700">Font Size: <span id="font-size-value-title">40</span></label>
-                                    <input type="range" id="font-size-slider-title" min="20" max="80" value="40" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
-                                </div>
-                                 <div>
-                                     <label for="title-color-input" class="block text-sm font-medium text-gray-700">Color</label>
-                                     <input type="color" id="title-color-input" value="#111827" class="mt-1 h-10 w-full rounded-md border-gray-300">
-                                 </div>
-                                 <div id="custom-title-options" class="space-y-2">
+                              <div>
+                                  <label for="font-weight-select-title" class="block text-sm font-medium text-gray-700">Weight</label>
+                                  <select id="font-weight-select-title" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"></select>
+                              </div>
+                              <div>
+                                  <label for="font-size-slider-title" class="block text-sm font-medium text-gray-700">Font Size: <span id="font-size-value-title">40</span></label>
+                                  <input type="range" id="font-size-slider-title" min="20" max="80" value="40" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                              </div>
+                               <div>
+                                   <label for="title-color-input" class="block text-sm font-medium text-gray-700">Color</label>
+                                   <input type="color" id="title-color-input" value="#111827" class="mt-1 h-10 w-full rounded-md border-gray-300">
+                               </div>
+                               <div id="custom-title-options" class="space-y-2">
                                 <div>
                                     <label for="puzzle-title-format" class="block text-sm font-medium text-gray-600">Puzzle Title Format</label>
                                     <input type="text" id="puzzle-title-format" value="Puzzle #" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm text-sm">
@@ -387,89 +402,93 @@
                                 </div>
                                 <p class="text-xs text-gray-500">Use # as a placeholder for the puzzle number.</p>
                             </div>
-                         </div>
+                            <div>
+                                <label for="title-spacing-slider" class="block text-sm font-medium text-gray-700">Spacing: <span id="title-spacing-value">10</span>px</label>
+                                <input type="range" id="title-spacing-slider" min="0" max="50" value="10" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                            </div>
+                        </div>
 
                         <!-- Grid Numbers Font Selection -->
-                         <div class="space-y-2">
-                             <h3 class="text-md font-semibold text-gray-700">Grid Numbers Font</h3>
+                        <div class="space-y-2">
+                            <h3 class="text-md font-semibold text-gray-700">Grid Numbers Font</h3>
+                            <div>
+                                <label for="font-method-select" class="block text-sm font-medium text-gray-700">Font Family</label>
+                                <select id="font-method-select" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                                    <optgroup label="Pre-loaded Fonts">
+                                        <option value="Roboto Mono:400,700" selected>Roboto Mono</option>
+                                        <option value="Lora:400,700">Lora</option>
+                                        <option value="Playfair Display:400,700">Playfair Display</option>
+                                        <option value="Oswald:400,700">Oswald</option>
+                                        <option value="Lato:400,700">Lato</option>
+                                        <option value="Montserrat:400,700">Montserrat</option>
+                                    </optgroup>
+                                    <optgroup label="Custom Fonts">
+                                        <option value="google">Add Google Font</option>
+                                        <option value="url">Add Font from URL</option>
+                                        <option value="upload">Upload Font</option>
+                                    </optgroup>
+                                </select>
+                            </div>
+                            <div id="google-font-container" class="space-y-2 hidden">
+                                <label for="google-font-input" class="block text-sm font-medium text-gray-700">Google Font Link</label>
+                                <div class="flex gap-2">
+                                    <input type="text" id="google-font-input" class="block w-full rounded-md border-gray-300 shadow-sm sm:text-sm" placeholder='Paste <link> tag here'>
+                                    <button id="add-google-font-btn" class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700">Apply</button>
+                                </div>
+                            </div>
+                            <div id="url-font-container" class="space-y-2 hidden">
+                                <div>
+                                    <label for="url-font-css-input" class="block text-sm font-medium text-gray-700">CSS URL</label>
+                                    <input type="url" id="url-font-css-input" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm" placeholder='https://.../font.css'>
+                                </div>
+                                <div>
+                                    <label for="url-font-family-input" class="block text-sm font-medium text-gray-700">Font Family Name</label>
+                                    <div class="flex gap-2 mt-1">
+                                        <input type="text" id="url-font-family-input" class="block w-full rounded-md border-gray-300 shadow-sm sm:text-sm" placeholder='"Comic Sans MS"'>
+                                        <button id="add-url-font-btn" class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700">Apply</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div id="upload-font-container" class="space-y-2 hidden">
+                                <label for="custom-font-uploader" class="block text-sm font-medium text-gray-700">Upload Font File</label>
+                                <input type="file" id="custom-font-uploader" accept=".ttf,.otf,.woff,.woff2" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-600 hover:file:bg-indigo-100">
+                            </div>
                              <div>
-                                 <label for="font-method-select" class="block text-sm font-medium text-gray-700">Font Family</label>
-                                 <select id="font-method-select" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
-                                     <optgroup label="Pre-loaded Fonts">
-                                         <option value="Roboto Mono:400,700" selected>Roboto Mono</option>
-                                         <option value="Lora:400,700">Lora</option>
-                                         <option value="Playfair Display:400,700">Playfair Display</option>
-                                         <option value="Oswald:400,700">Oswald</option>
-                                         <option value="Lato:400,700">Lato</option>
-                                         <option value="Montserrat:400,700">Montserrat</option>
-                                     </optgroup>
-                                     <optgroup label="Custom Fonts">
-                                         <option value="google">Add Google Font</option>
-                                         <option value="url">Add Font from URL</option>
-                                         <option value="upload">Upload Font</option>
-                                     </optgroup>
-                                 </select>
+                                 <label for="font-weight-select" class="block text-sm font-medium text-gray-700">Weight</label>
+                                 <select id="font-weight-select" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"></select>
                              </div>
-                             <div id="google-font-container" class="space-y-2 hidden">
-                                 <label for="google-font-input" class="block text-sm font-medium text-gray-700">Google Font Link</label>
-                                 <div class="flex gap-2">
-                                     <input type="text" id="google-font-input" class="block w-full rounded-md border-gray-300 shadow-sm sm:text-sm" placeholder='Paste <link> tag here'>
-                                     <button id="add-google-font-btn" class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700">Apply</button>
-                                 </div>
+                             <div>
+                                 <label for="font-size-slider" class="block text-sm font-medium text-gray-700">Font Size: <span id="font-size-value">30</span></label>
+                                 <input type="range" id="font-size-slider" min="15" max="35" value="30" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
                              </div>
-                             <div id="url-font-container" class="space-y-2 hidden">
-                                 <div>
-                                     <label for="url-font-css-input" class="block text-sm font-medium text-gray-700">CSS URL</label>
-                                     <input type="url" id="url-font-css-input" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm" placeholder='https://.../font.css'>
-                                 </div>
-                                 <div>
-                                     <label for="url-font-family-input" class="block text-sm font-medium text-gray-700">Font Family Name</label>
-                                     <div class="flex gap-2 mt-1">
-                                         <input type="text" id="url-font-family-input" class="block w-full rounded-md border-gray-300 shadow-sm sm:text-sm" placeholder='"Comic Sans MS"'>
-                                         <button id="add-url-font-btn" class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700">Apply</button>
-                                     </div>
-                                 </div>
-                             </div>
-                             <div id="upload-font-container" class="space-y-2 hidden">
-                                 <label for="custom-font-uploader" class="block text-sm font-medium text-gray-700">Upload Font File</label>
-                                 <input type="file" id="custom-font-uploader" accept=".ttf,.otf,.woff,.woff2" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-600 hover:file:bg-indigo-100">
-                             </div>
-                                <div>
-                                    <label for="font-weight-select" class="block text-sm font-medium text-gray-700">Weight</label>
-                                    <select id="font-weight-select" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"></select>
-                                </div>
-                                <div>
-                                    <label for="font-size-slider" class="block text-sm font-medium text-gray-700">Font Size: <span id="font-size-value">30</span></label>
-                                    <input type="range" id="font-size-slider" min="15" max="35" value="30" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
-                                </div>
-                         </div>
+                        </div>
                         
                         <!-- Colors -->
                         <div class="grid grid-cols-2 gap-4 border-t pt-4">
-                                <div>
-                                    <label for="given-color" class="block text-sm font-medium text-gray-700">Given Numbers</label>
-                                    <input type="color" id="given-color" value="#111827" class="mt-1 h-10 w-full rounded-md border-gray-300">
-                                </div>
-                                <div>
-                                    <label for="user-color" class="block text-sm font-medium text-gray-700">User Numbers</label>
-                                    <input type="color" id="user-color" value="#4f46e5" class="mt-1 h-10 w-full rounded-md border-gray-300">
-                                </div>
-                                <div>
-                                    <label for="solution-color" class="block text-sm font-medium text-gray-700">Solution Numbers</label>
-                                    <input type="color" id="solution-color" value="#16a34a" class="mt-1 h-10 w-full rounded-md border-gray-300">
-                                </div>
-                                <div>
-                                    <label for="main-border-color" class="block text-sm font-medium text-gray-700">Outer Border</label>
-                                    <input type="color" id="main-border-color" value="#111827" class="mt-1 h-10 w-full rounded-md border-gray-300">
-                                </div>
-                                <div>
-                                    <label for="box-border-color" class="block text-sm font-medium text-gray-700">Box Border</label>
-                                    <input type="color" id="box-border-color" value="#4b5563" class="mt-1 h-10 w-full rounded-md border-gray-300">
-                                </div>
-                                <div>
-                                    <label for="cell-border-color" class="block text-sm font-medium text-gray-700">Cell Border</label>
-                                    <input type="color" id="cell-border-color" value="#d1d5db" class="mt-1 h-10 w-full rounded-md border-gray-300">
-                                </div>
+                                 <div>
+                                     <label for="given-color" class="block text-sm font-medium text-gray-700">Given Numbers</label>
+                                     <input type="color" id="given-color" value="#111827" class="mt-1 h-10 w-full rounded-md border-gray-300">
+                                 </div>
+                                 <div>
+                                     <label for="user-color" class="block text-sm font-medium text-gray-700">User Numbers</label>
+                                     <input type="color" id="user-color" value="#4f46e5" class="mt-1 h-10 w-full rounded-md border-gray-300">
+                                 </div>
+                                 <div>
+                                     <label for="solution-color" class="block text-sm font-medium text-gray-700">Solution Numbers</label>
+                                     <input type="color" id="solution-color" value="#16a34a" class="mt-1 h-10 w-full rounded-md border-gray-300">
+                                 </div>
+                                 <div>
+                                     <label for="main-border-color" class="block text-sm font-medium text-gray-700">Outer Border</label>
+                                     <input type="color" id="main-border-color" value="#111827" class="mt-1 h-10 w-full rounded-md border-gray-300">
+                                 </div>
+                                 <div>
+                                     <label for="box-border-color" class="block text-sm font-medium text-gray-700">Box Border</label>
+                                     <input type="color" id="box-border-color" value="#4b5563" class="mt-1 h-10 w-full rounded-md border-gray-300">
+                                 </div>
+                                 <div>
+                                     <label for="cell-border-color" class="block text-sm font-medium text-gray-700">Cell Border</label>
+                                     <input type="color" id="cell-border-color" value="#d1d5db" class="mt-1 h-10 w-full rounded-md border-gray-300">
+                                 </div>
                         </div>
                         <!-- Border Widths -->
                         <div class="space-y-2 border-t pt-4">
@@ -591,6 +610,8 @@
             const fontSizeSliderTitle = document.getElementById('font-size-slider-title');
             const fontSizeValueTitle = document.getElementById('font-size-value-title');
             const titleColorInput = document.getElementById('title-color-input');
+            const titleSpacingSlider = document.getElementById('title-spacing-slider');
+            const titleSpacingValue = document.getElementById('title-spacing-value');
 
 
             const givenColorInput = document.getElementById('given-color');
@@ -623,9 +644,10 @@
             const puzzleTitleFormatInput = document.getElementById('puzzle-title-format');
             const solutionTitleFormatInput = document.getElementById('solution-title-format');
             const solutionsOnSeparatePages = document.getElementById('solutions-on-separate-pages');
+            const pdfLayoutPuzzlesSelect = document.getElementById('pdf-layout-puzzles');
+            const pdfLayoutSolutionsSelect = document.getElementById('pdf-layout-solutions');
             const exportAllPuzzles = document.getElementById('export-all-puzzles'); // New element
             const exportTransparentBg = document.getElementById('export-transparent-bg');
-            const pdfLayoutSelect = document.getElementById('pdf-layout');
             const pdfHeaderInput = document.getElementById('pdf-header');
             const pdfFooterInput = document.getElementById('pdf-footer');
             
@@ -837,7 +859,9 @@
                 container.dataset.puzzleId = index;
 
                 const puzzleTitle = document.createElement('h3');
-                puzzleTitle.className = 'puzzle-title-preview text-center mb-2'; // Use a dedicated class for dynamic styling
+                puzzleTitle.className = 'puzzle-title-preview text-center';
+                const titleSpacing = document.getElementById('title-spacing-slider').value;
+                puzzleTitle.style.marginBottom = `${titleSpacing}px`;
                 const puzzleTitleFormat = puzzleTitleFormatInput.value;
                 puzzleTitle.textContent = puzzleTitleFormat.replace('#', index + 1);
                 container.appendChild(puzzleTitle);
@@ -1361,11 +1385,13 @@
                  ctx.drawImage(canvas, 0, 0, exportPreviewCanvas.width, exportPreviewCanvas.height);
             }
             async function createExportCanvas(isFinalExport, puzzleIndex) {
+                const puzzleData = generatedPuzzles[puzzleIndex];
+                if (!puzzleData) return null; // FIX: Prevent error if puzzle data is missing
+
                 const includePuzzle = exportIncludePuzzle.checked;
                 const includeSolution = exportIncludeSolution.checked;
                 const includeTitles = exportIncludeTitles.checked;
                 if (!includePuzzle && !includeSolution) return null;
-                const puzzleData = generatedPuzzles[puzzleIndex];
                 
                 const puzzleTitleFormat = puzzleTitleFormatInput.value;
                 const solutionTitleFormat = solutionTitleFormatInput.value;
@@ -1410,25 +1436,23 @@
                 const includeTitles = exportIncludeTitles.checked;
                 const puzzleTitleFormat = puzzleTitleFormatInput.value;
                 const solutionTitleFormat = solutionTitleFormatInput.value;
-                const titleHeight = includeTitles ? 80 : 0;
                 const puzzleTitleText = includeTitles ? puzzleTitleFormat.replace('#', id + 1) : '';
                 const solutionTitleText = includeTitles ? solutionTitleFormat.replace('#', id + 1) : '';
                 
-                const getFontPromise = (dataUrl, url) => {
-                    if (dataUrl) {
-                        return Promise.resolve(dataUrl);
-                    }
-                    if (url) {
-                        return getFontDataURL(url);
-                    }
-                    return Promise.resolve(null);
-                };
+                let svgContent = `<?xml version="1.0" standalone="no"?>`;
 
-                const gridFontPromise = getFontPromise(activeFontDataUrl, activeFontUrl);
-                const titleFontPromise = getFontPromise(activeTitleFontDataUrl, activeTitleFontUrl);
+                const fontUrls = new Set();
+                if (activeFontUrl && !activeFontDataUrl) { // Only link if it's a URL, not an uploaded font
+                    fontUrls.add(activeFontUrl);
+                }
+                if (activeTitleFontUrl && !activeTitleFontDataUrl) {
+                    fontUrls.add(activeTitleFontUrl);
+                }
 
-                const [fontDataUrl, titleFontDataUrl] = await Promise.all([gridFontPromise, titleFontPromise]);
-
+                fontUrls.forEach(url => {
+                    const sanitizedUrl = url.replace(/&/g, '&amp;');
+                    svgContent += `<?xml-stylesheet href="${sanitizedUrl}" type="text/css"?>`;
+                });
 
                 const createSvgGrid = (board, titleText, isSolutionGrid) => {
                     let gridSvg = `<g>`;
@@ -1471,7 +1495,7 @@
                     }
                     if (titleText) {
                        const titleFontSize = (parseFloat(fontSizeSliderTitle.value) / 40) * 48;
-                       gridSvg += `<text x="${svgSize/2}" y="-30" class="title" style="font-size: ${titleFontSize}px;">${titleText}</text>`;
+                       gridSvg += `<text x="${svgSize/2}" y="${- (parseFloat(titleSpacingSlider.value) * 2)}" class="title" style="font-size: ${titleFontSize}px;">${titleText}</text>`;
                     }
                     gridSvg += `</g>`;
                     return gridSvg;
@@ -1481,18 +1505,23 @@
                 const includeSolution = exportIncludeSolution.checked;
                 const gap = 100;
                 let totalHeight = 0;
-                if(includePuzzle) totalHeight += svgSize + titleHeight;
-                if(includeSolution) totalHeight += (includePuzzle ? gap : 0) + svgSize + titleHeight;
+                const spacingValue = parseFloat(titleSpacingSlider.value) || 10;
+                const scaledSpacing = spacingValue * 2; 
+
+                const titleAreaHeight = includeTitles ? 80 : 0;
+
+                if(includePuzzle) totalHeight += svgSize + titleAreaHeight + (includeTitles ? scaledSpacing : 0);
+                if(includeSolution) totalHeight += (includePuzzle ? gap : 0) + svgSize + titleAreaHeight + (includeTitles ? scaledSpacing : 0);
                 if (totalHeight === 0) return null;
 
-                let svgContent = `<svg width="${svgSize}" height="${totalHeight}" xmlns="http://www.w3.org/2000/svg">`;
+                svgContent += `<svg width="${svgSize}" height="${totalHeight}" xmlns="http://www.w3.org/2000/svg">`;
                 
                 svgContent += `<defs><style>`;
-                if (fontDataUrl) {
-                    svgContent += `@font-face { font-family: '${activeFont}'; src: url(${fontDataUrl}); }`;
+                if (activeFontDataUrl) {
+                    svgContent += `@font-face { font-family: '${activeFont}'; src: url(${activeFontDataUrl}); }`;
                 }
-                if (titleFontDataUrl) {
-                     svgContent += `@font-face { font-family: '${activeTitleFont}'; src: url(${titleFontDataUrl}); }`;
+                if (activeTitleFontDataUrl) {
+                     svgContent += `@font-face { font-family: '${activeTitleFont}'; src: url(${activeTitleFontDataUrl}); }`;
                 }
 
                 svgContent += `
@@ -1505,12 +1534,13 @@
                 
                 svgContent += `<rect width="100%" height="100%" fill="${exportTransparentBg.checked && currentExportFormat === 'svg' ? 'none' : 'white'}"/>`;
 
-                let yOffset = titleHeight;
+                let yOffset = titleAreaHeight + (includeTitles ? scaledSpacing : 0);
                 if(includePuzzle) {
                     svgContent += `<g transform="translate(0, ${yOffset})">${createSvgGrid(puzzle, puzzleTitleText, false)}</g>`;
                     yOffset += svgSize + gap;
                 }
                 if(includeSolution) {
+                    if (!includePuzzle) yOffset = titleAreaHeight + (includeTitles ? scaledSpacing : 0);
                     svgContent += `<g transform="translate(0, ${yOffset})">${createSvgGrid(solution, solutionTitleText, true)}</g>`;
                 }
                 
@@ -1529,134 +1559,88 @@
                 const headerText = pdfHeaderInput.value.trim();
                 const footerText = pdfFooterInput.value.trim();
 
-                // Build a list of all items to be rendered in the PDF
-                const renderItems = [];
+                const puzzlesPerPage = parseInt(pdfLayoutPuzzlesSelect.value, 10);
+                const solutionsPerPage = parseInt(pdfLayoutSolutionsSelect.value, 10);
+                
                 const puzzleItems = [];
-                const solutionItems = [];
-
                 if (includePuzzle) {
                     for (let i = 0; i < generatedPuzzles.length; i++) {
                         puzzleItems.push({ type: 'puzzle', index: i });
                     }
                 }
+                const solutionItems = [];
                 if (includeSolution) {
                     for (let i = 0; i < generatedPuzzles.length; i++) {
                         solutionItems.push({ type: 'solution', index: i });
                     }
                 }
 
-                if (solutionOnNewPage) {
-                    renderItems.push(...puzzleItems, ...solutionItems);
-                } else {
-                    for (let i = 0; i < generatedPuzzles.length; i++) {
-                        if (puzzleItems[i]) renderItems.push(puzzleItems[i]);
-                        if (solutionItems[i]) renderItems.push(solutionItems[i]);
-                    }
-                }
+                if (puzzleItems.length === 0 && solutionItems.length === 0) return;
 
-                if (renderItems.length === 0) return;
+                const layoutConfig = {1:{r:1,c:1}, 2:{r:2,c:1}, 4:{r:2,c:2}, 6:{r:3,c:2}, 8:{r:4,c:2}, 9:{r:3,c:3}, 12:{r:4,c:3}};
+                const kdpLayoutConfig = {1:{r:1,c:1}, 2:{r:2,c:1}, 4:{r:2,c:2}, 6:{r:3,c:2}, 8:{r:4,c:2}, 9:{r:3,c:3}, 12:{r:4,c:3}};
+                
+                const renderSet = async (pdf, items, itemsPerPage, isKDP, kdpConfig, pageCounter, totalPages, isSolution) => {
+                    const currentLayoutConfig = isKDP ? kdpLayoutConfig : layoutConfig;
+                    const layout = currentLayoutConfig[itemsPerPage];
+                    const layoutGap = isKDP ? 0.15 : 5;
 
-
-                if (kdpEnableToggle.checked) {
-                    // --- KDP PDF Export Logic ---
-                    let trimWidth, trimHeight;
-
-                    if (kdpTrimSizeSelect.value === 'custom') {
-                        trimWidth = parseFloat(kdpCustomWidthInput.value) || 6;
-                        trimHeight = parseFloat(kdpCustomHeightInput.value) || 9;
-                    } else {
-                        const trimSizeParts = kdpTrimSizeSelect.value.split('x').map(parseFloat);
-                        trimWidth = trimSizeParts[0];
-                        trimHeight = trimSizeParts[1];
-                    }
-
-                    const hasBleed = kdpBleedCheckbox.checked;
-
-                    const puzzlesPerPage = parseInt(pdfLayoutSelect.value, 10);
-                    const totalPages = Math.ceil(renderItems.length / puzzlesPerPage);
-
-                    let insideMargin, outsideMargin, topMargin, bottomMargin;
-                    
-                    if (kdpCustomMarginsToggle.checked) {
-                        topMargin = parseFloat(kdpMarginTopInput.value) || 0.375;
-                        bottomMargin = parseFloat(kdpMarginBottomInput.value) || 0.375;
-                        insideMargin = parseFloat(kdpMarginInsideInput.value) || 0.375;
-                        outsideMargin = parseFloat(kdpMarginOutsideInput.value) || 0.375;
-                    } else {
-                        if (totalPages >= 24 && totalPages <= 150) insideMargin = 0.375;
-                        else if (totalPages >= 151 && totalPages <= 300) insideMargin = 0.5;
-                        else if (totalPages >= 301 && totalPages <= 500) insideMargin = 0.625;
-                        else if (totalPages >= 501 && totalPages <= 700) insideMargin = 0.75;
-                        else if (totalPages >= 701 && totalPages <= 828) insideMargin = 0.875;
-                        else insideMargin = 0.375; 
-
-                        outsideMargin = hasBleed ? 0.375 : 0.25;
-                        topMargin = outsideMargin;
-                        bottomMargin = outsideMargin;
-                    }
-
-                    let pageWidth = trimWidth;
-                    let pageHeight = trimHeight;
-                    if (hasBleed) {
-                        pageWidth += 0.125;
-                        pageHeight += 0.25;
-                    }
-
-                    const pdf = new jsPDF({ orientation: 'p', unit: 'in', format: [pageWidth, pageHeight] });
-                    
-                    const layoutConfig = {
-                        1: { rows: 1, cols: 1, gap: 0 },
-                        2: { rows: 2, cols: 1, gap: 0.25 },
-                        4: { rows: 2, cols: 2, gap: 0.25 },
-                        6: { rows: 3, cols: 2, gap: 0.15 }
-                    };
-                    const layout = layoutConfig[puzzlesPerPage];
-                    let pageNum = 1;
-
-                    for (let i = 0; i < renderItems.length; i += puzzlesPerPage) {
-                        if (i > 0) pdf.addPage();
-                        
-                        const headerHeight = headerText ? 0.4 : 0;
-                        const footerHeight = footerText ? 0.4 : 0;
-
-                        if (headerText) {
-                            pdf.setFontSize(10);
-                            pdf.text(headerText, pageWidth / 2, topMargin - 0.2, { align: 'center' });
+                    for (let i = 0; i < items.length; i += itemsPerPage) {
+                        if (pageCounter.num > 1) {
+                            pdf.addPage();
                         }
+                        exportProceedText.textContent = `Processing page ${pageCounter.num} of ${totalPages}...`;
+                        await new Promise(resolve => setTimeout(resolve, 20));
 
-                        const pageItems = renderItems.slice(i, i + puzzlesPerPage);
-                        
-                        const isRightPage = pageNum % 2 !== 0;
-                        const currentInsideMargin = isRightPage ? insideMargin : outsideMargin;
-                        
-                        const contentWidth = trimWidth - insideMargin - outsideMargin;
-                        const contentHeight = trimHeight - topMargin - bottomMargin - headerHeight - footerHeight;
-                        
-                        const itemWidth = (contentWidth - (layout.cols - 1) * layout.gap) / layout.cols;
-                        const itemHeight = (contentHeight - (layout.rows - 1) * layout.gap) / layout.rows;
-                        
-                        // Calculate required canvas size for 300 DPI
-                        const canvasOutputSize = itemWidth * 300;
+                        let itemWidth, itemHeight;
+                        let startX, startY;
 
-
+                        if (isKDP) {
+                            const headerHeight = headerText ? 0.4 : 0;
+                            const footerHeight = footerText ? 0.4 : 0;
+                            const isRightPage = pageCounter.num % 2 !== 0;
+                            const currentInsideMargin = isRightPage ? kdpConfig.insideMargin : kdpConfig.outsideMargin;
+                            const currentOutsideMargin = isRightPage ? kdpConfig.outsideMargin : kdpConfig.insideMargin;
+                            
+                            const contentWidth = kdpConfig.trimWidth - currentInsideMargin - currentOutsideMargin;
+                            const contentHeight = kdpConfig.trimHeight - kdpConfig.topMargin - kdpConfig.bottomMargin - headerHeight - footerHeight;
+                            
+                            itemWidth = (contentWidth - (layout.c - 1) * layoutGap) / layout.c;
+                            itemHeight = (contentHeight - (layout.r - 1) * layoutGap) / layout.r;
+                            startX = currentInsideMargin;
+                            startY = kdpConfig.topMargin + headerHeight;
+                             if (headerText) {
+                                pdf.setFontSize(10);
+                                pdf.text(headerText, kdpConfig.pageWidth / 2, kdpConfig.topMargin - 0.2, { align: 'center' });
+                            }
+                        } else {
+                            const MARGIN = 15;
+                            const A4_WIDTH = 210;
+                            const A4_HEIGHT = 297;
+                            const CONTENT_WIDTH = A4_WIDTH - MARGIN * 2;
+                            const CONTENT_HEIGHT = A4_HEIGHT - MARGIN * 2 - (headerText ? 10 : 0) - (footerText ? 10 : 0);
+                            itemWidth = (CONTENT_WIDTH - (layout.c - 1) * layoutGap) / layout.c;
+                            itemHeight = (CONTENT_HEIGHT - (layout.r - 1) * layoutGap) / layout.r;
+                            startX = MARGIN;
+                            startY = MARGIN + (headerText ? 10 : 0);
+                             if (headerText) {
+                                pdf.setFontSize(10);
+                                pdf.text(headerText, A4_WIDTH / 2, MARGIN - 5, { align: 'center' });
+                            }
+                        }
+                        
+                        const pageItems = items.slice(i, i + itemsPerPage);
                         for (let j = 0; j < pageItems.length; j++) {
                             const item = pageItems[j];
                             const puzzleData = generatedPuzzles[item.index];
-                            let canvas;
-
-                            if (item.type === 'puzzle') {
-                                const title = includeTitles ? puzzleTitleFormat.replace('#', item.index + 1) : null;
-                                canvas = await drawGridToCanvas(puzzleData.puzzle, title, {}, canvasOutputSize, false, null);
-                            } else { // solution
-                                const title = includeTitles ? solutionTitleFormat.replace('#', item.index + 1) : null;
-                                canvas = await drawGridToCanvas(puzzleData.solution, title, {}, canvasOutputSize, true, puzzleData.puzzle);
-                            }
-
-                            const row = Math.floor(j / layout.cols);
-                            const col = j % layout.cols;
-
-                            const x = currentInsideMargin + col * (itemWidth + layout.gap);
-                            const y = topMargin + headerHeight + row * (itemHeight + layout.gap);
+                            const title = includeTitles ? (isSolution ? solutionTitleFormat : puzzleTitleFormat).replace('#', item.index + 1) : null;
+                            const canvasOutputSize = Math.min((isKDP ? itemWidth : itemWidth / 25.4) * 300, 1500);
+                            const canvas = await drawGridToCanvas(isSolution ? puzzleData.solution : puzzleData.puzzle, title, {}, canvasOutputSize, isSolution, puzzleData.puzzle);
+                            
+                            const row = Math.floor(j / layout.c);
+                            const col = j % layout.c;
+                            const x = startX + col * (itemWidth + layoutGap);
+                            const y = startY + row * (itemHeight + layoutGap);
 
                             const imgProps = pdf.getImageProperties(canvas);
                             const ratio = imgProps.width / imgProps.height;
@@ -1669,89 +1653,89 @@
                             
                             const xOffset = (itemWidth - imgWidth) / 2;
                             const yOffset = (itemHeight - imgHeight) / 2;
-
-                            pdf.addImage(canvas.toDataURL('image/png', 1.0), 'PNG', x + xOffset, y + yOffset, imgWidth, imgHeight);
+                            pdf.addImage(canvas.toDataURL('image/png', 1.0), 'PNG', x + xOffset, y + yOffset, imgWidth, imgHeight, undefined, 'FAST');
                         }
-
 
                         if (footerText) {
                             pdf.setFontSize(10);
-                            const footer = footerText.replace('%p', pageNum).replace('%t', totalPages);
-                             pdf.text(footer, pageWidth / 2, trimHeight - bottomMargin + 0.3, { align: 'center' });
+                            const footer = footerText.replace('%p', pageCounter.num).replace('%t', totalPages);
+                            if(isKDP) {
+                                pdf.text(footer, kdpConfig.pageWidth / 2, kdpConfig.trimHeight - kdpConfig.bottomMargin + 0.3, { align: 'center' });
+                            } else {
+                                pdf.text(footer, 210 / 2, 297 - 15 + 5, { align: 'center' });
+                            }
                         }
-                        pageNum++;
+                        pageCounter.num++;
                     }
-                    pdf.save('sudoku_kdp_book.pdf');
+                }
 
-                } else {
-                    // --- Original PDF Export Logic ---
-                    const pdf = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
-                    const puzzlesPerPage = parseInt(pdfLayoutSelect.value, 10);
-                    const MARGIN = 15;
-                    const A4_WIDTH = 210;
-                    const A4_HEIGHT = 297;
-                    const CONTENT_WIDTH = A4_WIDTH - MARGIN * 2;
-                    const CONTENT_HEIGHT = A4_HEIGHT - MARGIN * 2 - (headerText ? 10 : 0) - (footerText ? 10 : 0);
-                    const layoutConfig = {1: {rows: 1, cols: 1, gap: 0}, 2: {rows: 2, cols: 1, gap: 10}, 4: {rows: 2, cols: 2, gap: 10}, 6: {rows: 3, cols: 2, gap: 5}};
-                    const layout = layoutConfig[puzzlesPerPage];
-                    const itemWidth = (CONTENT_WIDTH - (layout.cols - 1) * layout.gap) / layout.cols;
-                    const itemHeight = (CONTENT_HEIGHT - (layout.rows - 1) * layout.gap) / layout.rows;
+                if (solutionOnNewPage) {
+                    const totalPuzzlePages = includePuzzle ? Math.ceil(puzzleItems.length / puzzlesPerPage) : 0;
+                    const totalSolutionPages = includeSolution ? Math.ceil(solutionItems.length / solutionsPerPage) : 0;
+                    const totalPages = totalPuzzlePages + totalSolutionPages;
+                    let pageCounter = { num: 1 };
                     
-                    const itemWidthInInches = itemWidth / 25.4;
-                    const canvasOutputSize = itemWidthInInches * 300;
-
-                    const totalPages = Math.ceil(renderItems.length / puzzlesPerPage);
-                    let pageNum = 1;
-
-                    for (let i = 0; i < renderItems.length; i += puzzlesPerPage) {
-                        if (i > 0) pdf.addPage();
+                    if (kdpEnableToggle.checked) {
+                        const trimSizeParts = kdpTrimSizeSelect.value === 'custom' ? [parseFloat(kdpCustomWidthInput.value), parseFloat(kdpCustomHeightInput.value)] : kdpTrimSizeSelect.value.split('x').map(parseFloat);
+                        const trimWidth = trimSizeParts[0];
+                        const trimHeight = trimSizeParts[1];
+                        const hasBleed = kdpBleedCheckbox.checked;
+                        let insideMargin, outsideMargin, topMargin, bottomMargin;
+                        if (kdpCustomMarginsToggle.checked) {
+                            topMargin = parseFloat(kdpMarginTopInput.value); bottomMargin = parseFloat(kdpMarginBottomInput.value); insideMargin = parseFloat(kdpMarginInsideInput.value); outsideMargin = parseFloat(kdpMarginOutsideInput.value);
+                        } else {
+                            if (totalPages >= 24 && totalPages <= 150) insideMargin = 0.375; else if (totalPages > 150 && totalPages <= 300) insideMargin = 0.5; else if (totalPages > 300 && totalPages <= 500) insideMargin = 0.625; else if (totalPages > 500 && totalPages <= 700) insideMargin = 0.75; else if (totalPages > 700) insideMargin = 0.875; else insideMargin = 0.375;
+                            outsideMargin = hasBleed ? 0.375 : 0.25; topMargin = bottomMargin = outsideMargin;
+                        }
+                        const pageWidth = trimWidth + (hasBleed ? 0.125 : 0);
+                        const pageHeight = trimHeight + (hasBleed ? 0.25 : 0);
+                        const kdpConfig = { trimWidth, trimHeight, insideMargin, outsideMargin, topMargin, bottomMargin, pageWidth, pageHeight };
+                        const pdf = new jsPDF({ orientation: 'p', unit: 'in', format: [pageWidth, pageHeight] });
                         
-                        if (headerText) {
-                            pdf.setFontSize(10);
-                            pdf.text(headerText, A4_WIDTH / 2, MARGIN - 5, { align: 'center' });
-                        }
-
-                        const pageItems = renderItems.slice(i, i + puzzlesPerPage);
-
-                        for (let j = 0; j < pageItems.length; j++) {
-                            const item = pageItems[j];
-                            const puzzleData = generatedPuzzles[item.index];
-                            let canvas;
-
-                             if (item.type === 'puzzle') {
-                                const title = includeTitles ? puzzleTitleFormat.replace('#', item.index + 1) : null;
-                                canvas = await drawGridToCanvas(puzzleData.puzzle, title, {}, canvasOutputSize, false, null);
-                            } else { // solution
-                                const title = includeTitles ? solutionTitleFormat.replace('#', item.index + 1) : null;
-                                canvas = await drawGridToCanvas(puzzleData.solution, title, {}, canvasOutputSize, true, puzzleData.puzzle);
-                            }
-
-                            const row = Math.floor(j / layout.cols);
-                            const col = j % layout.cols;
-                            const x = MARGIN + col * (itemWidth + layout.gap);
-                            const y = MARGIN + (headerText ? 10 : 0) + row * (itemHeight + layout.gap);
-                            const imgProps = pdf.getImageProperties(canvas);
-                            const ratio = imgProps.width / imgProps.height;
-                            let imgWidth = itemWidth;
-                            let imgHeight = itemWidth / ratio;
-                            if (imgHeight > itemHeight) {
-                                imgHeight = itemHeight;
-                                imgWidth = itemHeight * ratio;
-                            }
-                            const xOffset = (itemWidth - imgWidth) / 2;
-                            const yOffset = (itemHeight - imgHeight) / 2;
-                            pdf.addImage(canvas.toDataURL('image/png', 1.0), 'PNG', x + xOffset, y + yOffset, imgWidth, imgHeight);
-                        }
-
-
-                        if (footerText) {
-                            pdf.setFontSize(10);
-                            const footer = footerText.replace('%p', pageNum).replace('%t', totalPages);
-                            pdf.text(footer, A4_WIDTH / 2, A4_HEIGHT - MARGIN + 5, { align: 'center' });
-                        }
-                        pageNum++;
+                        if (includePuzzle) await renderSet(pdf, puzzleItems, puzzlesPerPage, true, kdpConfig, pageCounter, totalPages, false);
+                        if (includeSolution) await renderSet(pdf, solutionItems, solutionsPerPage, true, kdpConfig, pageCounter, totalPages, true);
+                        
+                        pdf.save('sudoku_kdp_book.pdf');
+                    } else {
+                        const pdf = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
+                        if (includePuzzle) await renderSet(pdf, puzzleItems, puzzlesPerPage, false, null, pageCounter, totalPages, false);
+                        if (includeSolution) await renderSet(pdf, solutionItems, solutionsPerPage, false, null, pageCounter, totalPages, true);
+                        pdf.save('sudoku_puzzles.pdf');
                     }
-                    pdf.save('sudoku_puzzles.pdf');
+                } else {
+                    const renderItems = [];
+                    for (let i = 0; i < generatedPuzzles.length; i++) {
+                        if(includePuzzle) renderItems.push({ type: 'puzzle', index: i });
+                        if(includeSolution) renderItems.push({ type: 'solution', index: i });
+                    }
+                    const totalPages = Math.ceil(renderItems.length / puzzlesPerPage);
+                    let pageCounter = { num: 1 };
+                    
+                    if (kdpEnableToggle.checked) {
+                         const trimSizeParts = kdpTrimSizeSelect.value === 'custom' ? [parseFloat(kdpCustomWidthInput.value), parseFloat(kdpCustomHeightInput.value)] : kdpTrimSizeSelect.value.split('x').map(parseFloat);
+                        const trimWidth = trimSizeParts[0];
+                        const trimHeight = trimSizeParts[1];
+                        const hasBleed = kdpBleedCheckbox.checked;
+                        let insideMargin, outsideMargin, topMargin, bottomMargin;
+                        if (kdpCustomMarginsToggle.checked) {
+                            topMargin = parseFloat(kdpMarginTopInput.value); bottomMargin = parseFloat(kdpMarginBottomInput.value); insideMargin = parseFloat(kdpMarginInsideInput.value); outsideMargin = parseFloat(kdpMarginOutsideInput.value);
+                        } else {
+                            if (totalPages >= 24 && totalPages <= 150) insideMargin = 0.375; else if (totalPages > 150 && totalPages <= 300) insideMargin = 0.5; else if (totalPages > 300 && totalPages <= 500) insideMargin = 0.625; else if (totalPages > 500 && totalPages <= 700) insideMargin = 0.75; else if (totalPages > 700) insideMargin = 0.875; else insideMargin = 0.375;
+                            outsideMargin = hasBleed ? 0.375 : 0.25; topMargin = bottomMargin = outsideMargin;
+                        }
+                        const pageWidth = trimWidth + (hasBleed ? 0.125 : 0);
+                        const pageHeight = trimHeight + (hasBleed ? 0.25 : 0);
+                        const kdpConfig = { trimWidth, trimHeight, insideMargin, outsideMargin, topMargin, bottomMargin, pageWidth, pageHeight };
+                        const pdf = new jsPDF({ orientation: 'p', unit: 'in', format: [pageWidth, pageHeight] });
+                        
+                        await renderSet(pdf, renderItems, puzzlesPerPage, true, kdpConfig, pageCounter, totalPages, false); // isSolution is irrelevant here
+                        
+                        pdf.save('sudoku_kdp_book.pdf');
+                    } else {
+                        const pdf = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
+                        await renderSet(pdf, renderItems, puzzlesPerPage, false, null, pageCounter, totalPages, false); // isSolution is irrelevant here
+                        pdf.save('sudoku_puzzles.pdf');
+                    }
                 }
             }
             
@@ -1763,7 +1747,10 @@
                 
                 const canvasSize = outputSize;
                 const scale = canvasSize / 500; // Keep scale proportional
-                const titleHeight = title ? (canvasSize / 16) : 0; // Make title height proportional
+                const titleSpacingSlider = document.getElementById('title-spacing-slider');
+                const spacingValue = parseFloat(titleSpacingSlider.value) || 10;
+                const titleAreaHeight = title ? (canvasSize / 16) : 0;
+                const titleHeight = title ? titleAreaHeight + (spacingValue * scale) : 0; // Add scaled spacing
                 canvas.width = canvasSize;
                 canvas.height = canvasSize + titleHeight;
                 const ctx = canvas.getContext('2d');
@@ -1783,7 +1770,7 @@
                     ctx.font = `bold ${titleFontSize}px "${activeTitleFont}"`;
                     ctx.textAlign = 'center';
                     ctx.textBaseline = 'middle';
-                    ctx.fillText(title, canvasSize / 2, titleHeight / 2);
+                    ctx.fillText(title, canvasSize / 2, titleAreaHeight / 2);
                 }
                 ctx.translate(0, titleHeight);
                 
@@ -1873,7 +1860,7 @@
             showSolutionBtn.addEventListener('click', handleShowSolution);
             gridSizeSelect.addEventListener('change', updateDifficultyOptions);
             
-            [givenColorInput, userColorInput, solutionColorInput, mainBorderColorInput, boxBorderColorInput, cellBorderColorInput, fontSizeSlider, mainBorderSlider, boxBorderSlider, cellBorderSlider, titleColorInput, fontSizeSliderTitle, puzzleTitleFormatInput, solutionTitleFormatInput].forEach(el => {
+            [givenColorInput, userColorInput, solutionColorInput, mainBorderColorInput, boxBorderColorInput, cellBorderColorInput, fontSizeSlider, mainBorderSlider, boxBorderSlider, cellBorderSlider, titleColorInput, fontSizeSliderTitle, puzzleTitleFormatInput, solutionTitleFormatInput, titleSpacingSlider].forEach(el => {
                 if (el) { // Check if element exists before adding listener
                     el.addEventListener('input', () => {
                         if (el.id === 'font-size-slider') fontSizeValue.textContent = el.value;
@@ -1881,6 +1868,7 @@
                         if (el.id === 'main-border-slider') mainBorderValue.textContent = el.value;
                         if (el.id === 'box-border-slider') boxBorderValue.textContent = el.value;
                         if (el.id === 'cell-border-slider') cellBorderValue.textContent = el.value;
+                        if (el.id === 'title-spacing-slider') titleSpacingValue.textContent = el.value;
                         
                         if (generatedPuzzles.length > 0) {
                             displayPuzzles(currentPuzzleIndex + 1);
@@ -1916,12 +1904,24 @@
             exportCancelBtn.addEventListener('click', closeExportModal);
             exportProceedBtn.addEventListener('click', startExportProcess);
             
-            const exportOptionControls = [exportIncludePuzzle, exportIncludeSolution, solutionsOnSeparatePages, exportTransparentBg, exportIncludeTitles, puzzleTitleFormatInput, solutionTitleFormatInput, exportAllPuzzles, kdpEnableToggle, kdpTrimSizeSelect, kdpBleedCheckbox, kdpCustomWidthInput, kdpCustomHeightInput, kdpCustomMarginsToggle, kdpMarginTopInput, kdpMarginBottomInput, kdpMarginInsideInput, kdpMarginOutsideInput, pdfLayoutSelect];
+            const exportOptionControls = [exportIncludePuzzle, exportIncludeSolution, solutionsOnSeparatePages, exportTransparentBg, exportIncludeTitles, puzzleTitleFormatInput, solutionTitleFormatInput, exportAllPuzzles, kdpEnableToggle, kdpTrimSizeSelect, kdpBleedCheckbox, kdpCustomWidthInput, kdpCustomHeightInput, kdpCustomMarginsToggle, kdpMarginTopInput, kdpMarginBottomInput, kdpMarginInsideInput, kdpMarginOutsideInput, pdfLayoutPuzzlesSelect, pdfLayoutSolutionsSelect];
             exportOptionControls.forEach(el => {
                 if (el) { // Check if element exists before adding listener
                     el.addEventListener('input', updateExportPreview);
                 }
             });
+
+            function syncSolutionLayout() {
+                if (!solutionsOnSeparatePages.checked) {
+                    pdfLayoutSolutionsSelect.value = pdfLayoutPuzzlesSelect.value;
+                    pdfLayoutSolutionsSelect.disabled = true;
+                } else {
+                    pdfLayoutSolutionsSelect.disabled = false;
+                }
+            }
+            solutionsOnSeparatePages.addEventListener('change', syncSolutionLayout);
+            pdfLayoutPuzzlesSelect.addEventListener('change', syncSolutionLayout);
+
 
             kdpEnableToggle.addEventListener('change', () => {
                 const isEnabled = kdpEnableToggle.checked;
@@ -2113,9 +2113,9 @@
             setupFontHandlers('title');
             fontMethodSelect.dispatchEvent(new Event('change'));
             fontMethodSelectTitle.dispatchEvent(new Event('change'));
+            syncSolutionLayout();
         });
     </script>
 </body>
 </html>
-
 
